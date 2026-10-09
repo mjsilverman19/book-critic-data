@@ -1,0 +1,68 @@
+name: Refresh data
+
+on:
+  schedule:
+    - cron: "17 10 * * *"  # daily, 6:17 a.m. Eastern (EDT)
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max books to fetch (each takes 10-20 s)"
+        default: "900"
+      db_gz:
+        description: "Also rewrite data/bookmarks.db.gz"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Fetch new and changed books
+        env:
+          LIMIT: ${{ inputs.limit || '900' }}
+          DB_GZ: ${{ inputs.db_gz }}
+        run: |
+          FLAGS="--limit $LIMIT"
+          # the gzipped database is large and does not diff, so only rewrite it monthly
+          if [ "$(date -u +%d)" = "01" ] || [ "$DB_GZ" = "true" ]; then FLAGS="$FLAGS --db-gz"; fi
+          python3 update_data.py $FLAGS
+      - id: commit
+        name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          if git diff --cached --quiet; then
+            echo "No changes"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git diff --cached --stat
+            git commit -m "Refresh data $(date -u +%F)"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

@@ -68,6 +68,12 @@ python3 bookmarks_scraper.py stats --db bookmarks.db
 
 A crawl can be stopped and resumed. Rerunning with `--refresh-sitemap` only fetches books whose sitemap entry has changed.
 
+## Staying current
+
+`.github/workflows/refresh.yml` runs daily at 6:17 a.m. Eastern. It rebuilds the database from the CSVs, reads the sitemaps, and fetches only books that are new or whose sitemap `lastmod` changed, at the 10-second pace robots.txt asks for. Changed CSVs are committed to `main` and the explorer redeploys. A book that fails to fetch keeps its previous data and is retried the next day. Each run fetches at most 900 books; anything beyond that carries over. `data/bookmarks.db.gz` is rewritten on the first of each month, since a daily rewrite of a large binary file would bloat the repository. You can also run it by hand from the Actions tab ("Refresh data", Run workflow), with an option to rewrite the database file.
+
+To do the same locally: `python3 update_data.py --limit 50`.
+
 ## Known issues
 
 - **Ratings come from labels.** 113 reviews had corrupt values in the site's hidden numeric rating field (0 on some positives, 5 to 44 on some raves). Every `rating_value` here is derived from the Rave/Positive/Mixed/Pan label.
