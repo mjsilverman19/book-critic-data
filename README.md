@@ -1,7 +1,3 @@
-# Book Marks data
-
-**Private. Do not make this repository public.** It contains pull quotes from copyrighted reviews and Lit Hub's editorial ratings.
-
 This is a copy of [Book Marks](https://bookmarks.reviews), Lit Hub's book review aggregator, crawled on October 9, 2026. It covers 17,362 books and 120,972 reviews from 2,415 outlets and about 19,000 critics. Most books were published 2015 to 2026.
 
 ## Files
