@@ -1,5 +1,16 @@
 This is a copy of [Book Marks](https://bookmarks.reviews), Lit Hub's book review aggregator, crawled on October 9, 2026. It covers 17,362 books and 120,972 reviews from 2,415 outlets and about 19,000 critics. Most books were published 2015 to 2026.
 
+## Explorer
+
+`site/` is a static browser for the data: search, sortable tables of books, critics and outlets, and a page for each with its reviews. A GitHub Actions workflow builds it from the CSVs and publishes it to GitHub Pages on every push to `main` that touches `data/` or `site/`. To run it locally:
+
+```
+python3 site/build.py
+python3 -m http.server -d site
+```
+
+The build merges outlet spellings ("The Guardian" and "The Guardian (UK)") and critic spellings that share a slug or differ only in case. "Vs. others" is the mean difference between a critic's or outlet's rating and the average of the other reviews of the same book, counted only for books with four or more reviews and shown only when there are at least 20 such reviews.
+
 ## Files
 
 | File | Contents |

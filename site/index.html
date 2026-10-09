@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book Marks Data</title>
+<style>
+:root { --fg: #111; --dim: #888; --line: #e6e6e6; --bg: #fff; }
+@media (prefers-color-scheme: dark) { :root { --fg: #e8e8e8; --dim: #777; --line: #262626; --bg: #111; } }
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--fg); }
+body { margin: 0 auto; max-width: 980px; padding: 32px 16px 96px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+nav { display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; margin-bottom: 24px; }
+nav a { color: var(--dim); }
+nav a.on { color: var(--fg); }
+nav .n { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
+.bar { display: flex; gap: 16px; align-items: baseline; border-bottom: 1px solid var(--fg); margin-bottom: 8px; }
+input { font: inherit; color: inherit; background: none; border: 0; outline: 0; padding: 6px 0; }
+#q { flex: 1; min-width: 0; }
+#min { width: 3.5em; text-align: right; }
+.bar label { color: var(--dim); white-space: nowrap; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th { font-weight: normal; color: var(--dim); text-align: left; padding: 6px 12px 6px 0; cursor: pointer; user-select: none; white-space: nowrap; }
+th.on { color: var(--fg); }
+td { padding: 5px 12px 5px 0; border-top: 1px solid var(--line); vertical-align: top; }
+th:last-child, td:last-child { padding-right: 0; }
+.r { text-align: right; }
+.d { color: var(--dim); }
+h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
+.meta { color: var(--dim); margin-bottom: 16px; }
+.desc { max-width: 640px; margin: 0 0 32px; }
+.rev { padding: 12px 0; border-top: 1px solid var(--line); }
+.rev .h { color: var(--dim); }
+.rev .h b { font-weight: normal; color: var(--fg); }
+.rev p { margin: 4px 0 0; max-width: 680px; }
+#more { height: 1px; }
+.empty { color: var(--dim); padding: 24px 0; }
+@media (max-width: 640px) { .hide-s { display: none; } }
+</style>
+</head>
+<body>
+<nav>
+  <a href="#/books" data-v="books">Books</a>
+  <a href="#/critics" data-v="critics">Critics</a>
+  <a href="#/outlets" data-v="outlets">Outlets</a>
+  <span class="n" id="count"></span>
+</nav>
+<div id="head"></div>
+<div class="bar">
+  <input id="q" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
+  <label>min reviews <input id="min" type="number" min="1" value="1"></label>
+</div>
+<div id="out"><p class="empty">Loading…</p></div>
+<div id="more"></div>
+
+<script>
+const LABEL = ['', 'pan', 'mixed', 'positive', 'rave'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const f2 = x => x == null || isNaN(x) ? '' : x.toFixed(2);
+const sgn = x => x == null || isNaN(x) ? '' : (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(2);
+const pct = x => x == null || isNaN(x) ? '' : Math.round(x * 100) + '%';
+const int = x => x.toLocaleString('en-US');
+const enc = encodeURIComponent;
+const fold = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+let B = [], C = [], O = [], R = [], bySlug = {}, shards = 128;
+const cache = {};
+
+function shardOf(slug) { let h = 0; for (const ch of slug) h = (Math.imul(h, 31) + ch.codePointAt(0)) >>> 0; return h % shards; }
+async function detail(slug) {
+  const k = shardOf(slug);
+  cache[k] ??= fetch(`data/reviews/${k}.json`).then(r => r.json());
+  return (await cache[k])[slug] || { d: '', r: [] };
+}
+
+async function load() {
+  const [books, idx] = await Promise.all(['books', 'index'].map(f => fetch(`data/${f}.json`).then(r => r.json())));
+  shards = idx.shards;
+  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn], i) => ({
+    i, slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, dist,
+    n: dist[0] + dist[1] + dist[2] + dist[3], mean, adj, isbn, sum: 0, cnt: 0,
+    hay: fold([title, author, pub, date.slice(0, 4), genres.join(' '), isbn].join(' ')),
+  }));
+  B.forEach(b => bySlug[b.slug] = b);
+  C = idx.critics.map((name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, set: new Set(), hay: fold(name) }));
+  O = idx.outlets.map((name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, pan: 0, set: new Set(), hay: fold(name) }));
+  R = idx.reviews.map(([b, v, c, o]) => ({ b: B[b], v, c: C[c], o: O[o] }));
+  for (const r of R) { r.b.sum += r.v; r.b.cnt++; }
+  for (const r of R) {
+    const others = r.b.cnt >= 4 ? (r.b.sum - r.v) / (r.b.cnt - 1) : null;
+    r.loo = r.b.cnt > 1 ? (r.b.sum - r.v) / (r.b.cnt - 1) : null;
+    for (const [e, other] of [[r.c, r.o], [r.o, r.c]]) {
+      if (!e) continue;
+      e.n++; e.sum += r.v;
+      if (other) e.set.add(other.i);
+      if (others != null) { e.dev += r.v - others; e.dn++; }
+      if (e.pan != null && r.v === 1) e.pan++;
+    }
+  }
+  for (const e of [...C, ...O]) { e.mean = e.sum / e.n; e.vs = e.dn >= 20 ? e.dev / e.dn : null; e.links = e.set.size; e.panr = e.pan / e.n; }
+  C = C.filter(c => c.n); O = O.filter(o => o.n);
+  route();
+}
+
+// ---- table ----
+let T = null;
+function table(cols, rows, def) {
+  const st = saved[def.key] || { sort: def.sort, dir: def.dir ?? -1 };
+  T = { key: def.key, sort: st.sort, dir: st.dir, cols, rows, noun: def.noun, shown: 0 };
+  if (st.q != null) $('#q').value = st.q;
+  if (st.min != null) $('#min').value = st.min;
+  draw();
+}
+function filtered() {
+  const terms = fold($('#q').value).split(/\s+/).filter(Boolean);
+  const min = +$('#min').value || 1;
+  const col = T.cols.find(c => c.k === T.sort);
+  let rows = T.rows.filter(r => (r.n ?? 99) >= min && terms.every(t => r.hay.includes(t)));
+  const get = col.v || (r => r[col.k]);
+  rows.sort((a, b) => {
+    let x = get(a), y = get(b);
+    if (x == null || x === '') return 1; if (y == null || y === '') return -1;
+    return (typeof x === 'string' ? x.localeCompare(y) : x - y) * T.dir;
+  });
+  return rows;
+}
+function draw() {
+  T.view = filtered(); T.shown = 0;
+  const h = T.cols.map(c => `<th class="${c.num ? 'r ' : ''}${c.cls || ''}${c.k === T.sort ? ' on' : ''}" data-k="${c.k}">${c.label}${c.k === T.sort ? (T.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('');
+  $('#out').innerHTML = T.view.length ? `<table><thead><tr>${h}</tr></thead><tbody></tbody></table>` : '<p class="empty">No matches</p>';
+  $('#count').textContent = int(T.view.length) + ' ' + T.noun;
+  more();
+}
+function more() {
+  const tb = $('#out tbody'); if (!tb || T.shown >= T.view.length) return;
+  const end = Math.min(T.shown + 150, T.view.length);
+  tb.insertAdjacentHTML('beforeend', T.view.slice(T.shown, end).map(r =>
+    `<tr>${T.cols.map(c => `<td class="${c.num ? 'r ' : ''}${c.cls || ''}">${c.f ? c.f(r) : esc(r[c.k])}</td>`).join('')}</tr>`).join(''));
+  T.shown = end;
+}
+new IntersectionObserver(e => e[0].isIntersecting && T && more(), { rootMargin: '800px' }).observe($('#more'));
+$('#out').addEventListener('click', e => {
+  const th = e.target.closest('th'); if (!th) return;
+  const col = T.cols.find(c => c.k === th.dataset.k);
+  if (T.sort === th.dataset.k) T.dir = -T.dir; else { T.sort = col.k; T.dir = col.num ? -1 : 1; }
+  draw();
+});
+let tm; $('#q').addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(draw, 80); });
+$('#min').addEventListener('input', () => T && draw());
+
+// ---- views ----
+const bookLink = b => `<a href="#/book/${enc(b.slug)}">${esc(b.title)}</a>`;
+const cLink = c => c ? `<a href="#/critic/${enc(c.name)}">${esc(c.name)}</a>` : '<span class="d">Unsigned</span>';
+const oLink = o => o ? `<a href="#/outlet/${enc(o.name)}">${esc(o.name)}</a>` : '';
+const distTxt = d => `${d[0]} rave, ${d[1]} positive, ${d[2]} mixed, ${d[3]} pan`;
+
+const V = {
+  books() {
+    setMin(1);
+    head('');
+    table([
+      { k: 'title', label: 'Title', f: bookLink },
+      { k: 'author', label: 'Author', cls: 'hide-s' },
+      { k: 'year', label: 'Year', num: 1, cls: 'hide-s' },
+      { k: 'n', label: 'Reviews', num: 1 },
+      { k: 'pan', label: 'Pan', num: 1, cls: 'hide-s', v: r => r.dist[3] / r.n, f: r => r.dist[3] || '<span class="d">0</span>' },
+      { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
+      { k: 'adj', label: 'Adjusted', num: 1, f: r => f2(r.adj) },
+    ], B, { key: 'books', sort: 'adj', noun: 'books' });
+  },
+  critics() {
+    setMin(10); head('');
+    table([
+      { k: 'name', label: 'Critic', f: cLink },
+      { k: 'n', label: 'Reviews', num: 1 },
+      { k: 'links', label: 'Outlets', num: 1, cls: 'hide-s' },
+      { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
+      { k: 'vs', label: 'Vs. others', num: 1, f: r => sgn(r.vs) },
+    ], C, { key: 'critics', sort: 'n', noun: 'critics' });
+  },
+  outlets() {
+    setMin(10); head('');
+    table([
+      { k: 'name', label: 'Outlet', f: oLink },
+      { k: 'n', label: 'Reviews', num: 1 },
+      { k: 'links', label: 'Critics', num: 1, cls: 'hide-s' },
+      { k: 'panr', label: 'Pan', num: 1, cls: 'hide-s', f: r => pct(r.panr) },
+      { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
+      { k: 'vs', label: 'Vs. others', num: 1, f: r => sgn(r.vs) },
+    ], O, { key: 'outlets', sort: 'n', noun: 'outlets' });
+  },
+  critic(name) { person(C.find(c => c.name === name), 'critic'); },
+  outlet(name) { person(O.find(o => o.name === name), 'outlet'); },
+  async book(slug) {
+    const b = bySlug[slug]; if (!b) return head('<h1>Not found</h1>');
+    hideBar(true);
+    $('#count').textContent = '';
+    head(`<h1>${esc(b.title)}</h1><div class="meta">${esc(b.author)} · ${esc(b.pub)}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + esc(b.genres.join(', ')) : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
+    $('#out').innerHTML = '';
+    const d = await detail(slug);
+    if (location.hash !== '#/book/' + enc(slug)) return;
+    const cmap = Object.fromEntries(C.map(c => [c.name, c])), omap = Object.fromEntries(O.map(o => [o.name, o]));
+    $('#head').insertAdjacentHTML('beforeend', d.d ? `<p class="desc">${esc(d.d)}</p>` : '');
+    $('#out').innerHTML = d.r.map(([, v, c, o, url, q]) => `<div class="rev"><div class="h"><b>${LABEL[v]}</b> · ${c ? cLink(cmap[c]) : 'Unsigned'}${o ? ', ' + oLink(omap[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
+  },
+};
+
+function person(e, kind) {
+  if (!e) return head('<h1>Not found</h1>');
+  const rows = R.filter(r => (kind === 'critic' ? r.c : r.o) === e).map(r => ({
+    ...r.b, b: r.b, v: r.v, loo: r.loo, d: r.loo == null ? null : r.v - r.loo, other: kind === 'critic' ? r.o : r.c,
+    hay: r.b.hay + ' ' + fold(LABEL[r.v]) + ' ' + ((kind === 'critic' ? r.o : r.c)?.hay || ''),
+  }));
+  head(`<h1>${esc(e.name)}</h1><div class="meta">${int(e.n)} reviews · ${int(e.links)} ${kind === 'critic' ? 'outlets' : 'critics'} · mean ${f2(e.mean)}${e.vs != null ? ' · ' + sgn(e.vs) + ' vs. other reviewers of the same books' : ''}</div>`);
+  setMin(1);
+  table([
+    { k: 'title', label: 'Book', f: r => bookLink(r.b) },
+    { k: 'author', label: 'Author', cls: 'hide-s' },
+    { k: 'year', label: 'Year', num: 1, cls: 'hide-s' },
+    { k: 'other', label: kind === 'critic' ? 'Outlet' : 'Critic', cls: 'hide-s', v: r => r.other?.name ?? '', f: r => kind === 'critic' ? oLink(r.other) : cLink(r.other) },
+    { k: 'v', label: 'Rating', num: 1, f: r => LABEL[r.v] },
+    { k: 'loo', label: 'Others', num: 1, f: r => f2(r.loo) },
+    { k: 'd', label: 'Diff', num: 1, f: r => sgn(r.d) },
+  ], rows, { key: kind + ':' + e.name, sort: 'year', noun: 'reviews' });
+}
+
+function head(html) { $('#head').innerHTML = html; }
+function setMin(n) { hideBar(false); $('#min').value = n; }
+function hideBar(h) { $('.bar').style.display = h ? 'none' : ''; $('#more').style.display = h ? 'none' : ''; }
+
+let lastView = '';
+const saved = {};
+function route() {
+  const [, view = 'books', arg] = location.hash.match(/^#\/(\w+)(?:\/(.+))?/) || [];
+  const fn = V[view] || V.books;
+  const key = view + (arg || '');
+  if (key !== lastView) {
+    if (T) saved[T.key] = { sort: T.sort, dir: T.dir, q: $('#q').value, min: $('#min').value };
+    $('#q').value = ''; lastView = key; T = null;
+  }
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.v === view));
+  fn(arg && decodeURIComponent(arg));
+  window.scrollTo(0, 0);
+}
+addEventListener('hashchange', route);
+load();
+</script>
+</body>
+</html>
