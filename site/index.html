@@ -17,11 +17,11 @@ nav a { color: var(--dim); }
 nav a.on { color: var(--fg); }
 nav .n { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
 .bar { display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; border-bottom: 1px solid var(--fg); }
-input, select, button { font: inherit; color: inherit; background: none; border: 0; outline: 0; padding: 6px 0; margin: 0; }
-select, button { color: var(--dim); cursor: pointer; }
+input, select { font: inherit; color: inherit; background: none; border: 0; outline: 0; padding: 6px 0; margin: 0; }
+select { color: var(--dim); cursor: pointer; }
 select { field-sizing: content; max-width: 220px; }
 select.set { color: var(--fg); }
-button:hover, select:hover { color: var(--fg); }
+select:hover { color: var(--fg); }
 #q { flex: 1; min-width: 160px; }
 #min { width: 2.5em; text-align: right; -moz-appearance: textfield; }
 #min::-webkit-inner-spin-button, #min::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -41,6 +41,7 @@ th:last-child, td:last-child { padding-right: 0; }
 .f:hover { text-decoration: underline; }
 .scroll { overflow-x: auto; }
 .d { color: var(--dim); }
+.sub, .m-only { display: none; }
 h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .meta { color: var(--dim); margin-bottom: 16px; }
 .meta a:hover { color: var(--fg); }
@@ -51,7 +52,16 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .rev p { margin: 4px 0 0; max-width: 680px; }
 #more { height: 1px; }
 .empty { color: var(--dim); padding: 24px 0; }
-@media (max-width: 640px) { body { padding: 24px 16px 96px; } .hide-s { display: none; } }
+@media (max-width: 640px) {
+  body { padding: 24px 16px 96px; font-size: 13px; }
+  th, td { padding-right: 10px; }
+  td { white-space: nowrap; }
+  .sub { display: block; color: var(--dim); }
+  .desk, .md { display: none; }
+  td:first-child { min-width: 150px; white-space: normal; }
+  th:first-child, td:first-child { position: sticky; left: 0; background: var(--bg); z-index: 1; }
+  .scroll { margin-right: -16px; padding-right: 16px; }
+}
 </style>
 </head>
 <body>
@@ -69,7 +79,6 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
     <select id="p" class="bk"><option value="">All publishers</option></select>
     <select id="y" class="bk"><option value="">All years</option></select>
     <label>min reviews <input id="min" type="number" min="1" inputmode="numeric"></label>
-    <button id="csv" title="Download the rows shown as CSV">csv</button>
   </div>
   <div class="chips" id="chips"></div>
 </div>
@@ -207,15 +216,6 @@ function chips() {
   if (S.p && ![...$('#p').options].some(o => o.value === S.p)) $('#p').add(new Option(S.p, S.p));
   for (const k of ['g', 'p', 'y']) { $('#' + k).value = S[k]; $('#' + k).classList.toggle('set', !!S[k]); }
 }
-function csv() {
-  const cell = (c, r) => { const v = c.csv ? c.csv(r) : c.v ? c.v(r) : r[c.k]; return v == null ? '' : typeof v === 'number' ? +v.toFixed(3) : v; };
-  const q = s => /[",\n]/.test(s) ? `"${String(s).replace(/"/g, '""')}"` : s;
-  const lines = [T.cols.map(c => q(c.label)).join(','), ...T.view.map(r => T.cols.map(c => q(cell(c, r))).join(','))];
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
-  a.download = (T.name || T.noun).toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.csv';
-  a.click(); URL.revokeObjectURL(a.href);
-}
 
 new IntersectionObserver(e => e[0].isIntersecting && T && more(), { rootMargin: '800px' }).observe($('#more'));
 $('#out').addEventListener('click', e => {
@@ -234,15 +234,16 @@ $('#g').addEventListener('change', () => { S.g = $('#g').value; draw(); });
 $('#y').addEventListener('change', () => { S.y = $('#y').value; draw(); });
 $('#p').addEventListener('change', () => { S.p = $('#p').value; draw(); });
 $('#min').addEventListener('input', () => { S.min = $('#min').value; draw(); });
-$('#csv').addEventListener('click', csv);
 
 // ---- cells ----
 const bookLink = b => `<a href="#/book/${enc(b.slug)}">${esc(b.title)}</a>`;
+const titleCell = b => bookLink(b) + `<span class="sub">${esc(b.author)}</span>`;
+const dateCell = r => r.date ? `${r.date.slice(0, 4)}<span class="md">${r.date.slice(4)}</span>` : '';
 const cLink = c => c ? `<a href="#/critic/${enc(c.name)}">${esc(c.name)}</a>` : '<span class="d">Unsigned</span>';
 const oLink = o => o ? `<a href="#/outlet/${enc(o.name)}">${esc(o.name)}</a>` : '';
 const filt = (k, v) => v ? `<span class="f" data-fk="${k}" data-fv="${esc(v)}" title="Show only ${esc(v)}">${esc(v)}</span>` : '';
 const zero = x => x ? int(x) : '<span class="d">0</span>';
-const counts = (cls = 'hide-s') => ['Rave', 'Positive', 'Mixed', 'Pan'].map((label, j) =>
+const counts = (cls = '') => ['Rave', 'Positive', 'Mixed', 'Pan'].map((label, j) =>
   ({ k: 'c' + j, label, num: 1, cls, v: r => r.dist[j], f: r => zero(r.dist[j]) }));
 const distTxt = d => `${d[0]} rave, ${d[1]} positive, ${d[2]} mixed, ${d[3]} pan`;
 
@@ -250,10 +251,10 @@ const distTxt = d => `${d[0]} rave, ${d[1]} positive, ${d[2]} mixed, ${d[3]} pan
 const V = {
   books() {
     table([
-      { k: 'title', label: 'Title', f: bookLink },
-      { k: 'author', label: 'Author', cls: 'hide-s', f: r => filt('a', r.author) },
-      { k: 'date', label: 'Date', cls: 'nw hide-s' },
-      { k: 'ov', label: 'Overall', num: 1, cls: 'hide-s', tip: TIP.overall, f: r => esc(r.overall), csv: r => r.overall },
+      { k: 'title', label: 'Title', f: titleCell },
+      { k: 'author', label: 'Author', cls: 'desk', f: r => filt('a', r.author) },
+      { k: 'date', label: 'Date', cls: 'nw', f: dateCell },
+      { k: 'ov', label: 'Overall', num: 1, tip: TIP.overall, f: r => esc(r.overall) },
       { k: 'n', label: 'Reviews', num: 1 },
       ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
@@ -264,7 +265,7 @@ const V = {
     table([
       { k: 'name', label: 'Critic', f: cLink },
       { k: 'n', label: 'Reviews', num: 1 },
-      { k: 'links', label: 'Outlets', num: 1, cls: 'hide-s' },
+      { k: 'links', label: 'Outlets', num: 1 },
       ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
       { k: 'vs', label: 'Vs. others', num: 1, tip: TIP.vs, f: r => sgn(r.vs) },
@@ -274,7 +275,7 @@ const V = {
     table([
       { k: 'name', label: 'Outlet', f: oLink },
       { k: 'n', label: 'Reviews', num: 1 },
-      { k: 'links', label: 'Critics', num: 1, cls: 'hide-s' },
+      { k: 'links', label: 'Critics', num: 1 },
       ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
       { k: 'vs', label: 'Vs. others', num: 1, tip: TIP.vs, f: r => sgn(r.vs) },
@@ -303,13 +304,13 @@ function person(e, kind) {
   });
   head(`<h1>${esc(e.name)}</h1><div class="meta">${int(e.n)} reviews · ${int(e.links)} ${isC ? 'outlets' : 'critics'} · ${distTxt(e.dist)} · mean ${f2(e.mean)}${e.vs != null ? ' · ' + sgn(e.vs) + ' vs. other reviewers of the same books' : ''}</div>`);
   table([
-    { k: 'title', label: 'Book', f: r => bookLink(r.b) },
-    { k: 'author', label: 'Author', cls: 'hide-s', f: r => filt('a', r.author) },
-    { k: 'date', label: 'Date', cls: 'nw hide-s' },
-    { k: 'other', label: isC ? 'Outlet' : 'Critic', cls: 'hide-s', v: r => r.other?.name ?? '', f: r => isC ? oLink(r.other) : cLink(r.other) },
-    { k: 'v', label: 'Rating', num: 1, f: r => LABEL[r.v], csv: r => LABEL[r.v] },
+    { k: 'title', label: 'Book', f: r => titleCell(r.b) },
+    { k: 'author', label: 'Author', cls: 'desk', f: r => filt('a', r.author) },
+    { k: 'date', label: 'Date', cls: 'nw', f: dateCell },
+    { k: 'v', label: 'Rating', num: 1, f: r => LABEL[r.v] },
     { k: 'loo', label: 'Others’ mean', num: 1, tip: TIP.loo, f: r => f2(r.loo) },
     { k: 'diff', label: 'Diff', num: 1, f: r => sgn(r.diff) },
+    { k: 'other', label: isC ? 'Outlet' : 'Critic', cls: 'nw', v: r => r.other?.name ?? '', f: r => isC ? oLink(r.other) : cLink(r.other) },
   ], rows, { sort: 'date', noun: 'reviews', min: 1, name: e.name });
 }
 
