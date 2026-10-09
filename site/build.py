@@ -121,7 +121,7 @@ def main():
         out_books.append([
             b["slug"], b["title"], b["author"], b["publisher"], d, genres,
             [int(b["n_rave"] or 0), int(b["n_positive"] or 0), int(b["n_mixed"] or 0), int(b["n_pan"] or 0)],
-            m, adj, b["isbn"],
+            m, adj, b["isbn"], b["overall_label"],
         ])
         detail[shard(b["slug"])][b["slug"]]["d"] = b["description"].strip()
 
