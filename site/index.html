@@ -9,7 +9,7 @@
 @media (prefers-color-scheme: dark) { :root { --fg: #e8e8e8; --dim: #777; --line: #262626; --bg: #111; } }
 * { box-sizing: border-box; }
 html { background: var(--bg); color: var(--fg); }
-body { margin: 0 auto; max-width: 980px; padding: 32px 16px 96px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; }
+body { margin: 0 auto; max-width: 1440px; padding: 32px 24px 96px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; }
 a { color: inherit; text-decoration: none; }
 a:hover { text-decoration: underline; }
 nav { display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; margin-bottom: 24px; }
@@ -26,7 +26,11 @@ th { font-weight: normal; color: var(--dim); text-align: left; padding: 6px 12px
 th.on { color: var(--fg); }
 td { padding: 5px 12px 5px 0; border-top: 1px solid var(--line); vertical-align: top; }
 th:last-child, td:last-child { padding-right: 0; }
-.r { text-align: right; }
+.r { text-align: right; white-space: nowrap; }
+.nw { white-space: nowrap; }
+.g { color: var(--dim); min-width: 140px; }
+.scroll { overflow-x: auto; }
+@media (max-width: 640px) { body { padding: 24px 16px 96px; } }
 .d { color: var(--dim); }
 h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .meta { color: var(--dim); margin-bottom: 16px; }
@@ -79,14 +83,15 @@ async function detail(slug) {
 async function load() {
   const [books, idx] = await Promise.all(['books', 'index'].map(f => fetch(`data/${f}.json`).then(r => r.json())));
   shards = idx.shards;
-  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn], i) => ({
-    i, slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, dist,
+  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn, overall], i) => ({
+    i, slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, gtxt: genres.join(', '), dist, overall,
+    ov: { rave: 4, positive: 3, mixed: 2, pan: 1 }[overall] ?? null,
     n: dist[0] + dist[1] + dist[2] + dist[3], mean, adj, isbn, sum: 0, cnt: 0,
     hay: fold([title, author, pub, date.slice(0, 4), genres.join(' '), isbn].join(' ')),
   }));
   B.forEach(b => bySlug[b.slug] = b);
-  C = idx.critics.map((name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, set: new Set(), hay: fold(name) }));
-  O = idx.outlets.map((name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, pan: 0, set: new Set(), hay: fold(name) }));
+  C = idx.critics.map((name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, dist: [0, 0, 0, 0], set: new Set(), hay: fold(name) }));
+  O = idx.outlets.map((name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, dist: [0, 0, 0, 0], set: new Set(), hay: fold(name) }));
   R = idx.reviews.map(([b, v, c, o]) => ({ b: B[b], v, c: C[c], o: O[o] }));
   for (const r of R) { r.b.sum += r.v; r.b.cnt++; }
   for (const r of R) {
@@ -97,10 +102,10 @@ async function load() {
       e.n++; e.sum += r.v;
       if (other) e.set.add(other.i);
       if (others != null) { e.dev += r.v - others; e.dn++; }
-      if (e.pan != null && r.v === 1) e.pan++;
+      e.dist[4 - r.v]++;
     }
   }
-  for (const e of [...C, ...O]) { e.mean = e.sum / e.n; e.vs = e.dn >= 20 ? e.dev / e.dn : null; e.links = e.set.size; e.panr = e.pan / e.n; }
+  for (const e of [...C, ...O]) { e.mean = e.sum / e.n; e.vs = e.dn >= 20 ? e.dev / e.dn : null; e.links = e.set.size; }
   C = C.filter(c => c.n); O = O.filter(o => o.n);
   route();
 }
@@ -130,7 +135,7 @@ function filtered() {
 function draw() {
   T.view = filtered(); T.shown = 0;
   const h = T.cols.map(c => `<th class="${c.num ? 'r ' : ''}${c.cls || ''}${c.k === T.sort ? ' on' : ''}" data-k="${c.k}">${c.label}${c.k === T.sort ? (T.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('');
-  $('#out').innerHTML = T.view.length ? `<table><thead><tr>${h}</tr></thead><tbody></tbody></table>` : '<p class="empty">No matches</p>';
+  $('#out').innerHTML = T.view.length ? `<div class="scroll"><table><thead><tr>${h}</tr></thead><tbody></tbody></table></div>` : '<p class="empty">No matches</p>';
   $('#count').textContent = int(T.view.length) + ' ' + T.noun;
   more();
 }
@@ -155,6 +160,9 @@ $('#min').addEventListener('input', () => T && draw());
 const bookLink = b => `<a href="#/book/${enc(b.slug)}">${esc(b.title)}</a>`;
 const cLink = c => c ? `<a href="#/critic/${enc(c.name)}">${esc(c.name)}</a>` : '<span class="d">Unsigned</span>';
 const oLink = o => o ? `<a href="#/outlet/${enc(o.name)}">${esc(o.name)}</a>` : '';
+const zero = x => x ? int(x) : '<span class="d">0</span>';
+const counts = (cls = '') => ['Rave', 'Positive', 'Mixed', 'Pan'].map((label, j) =>
+  ({ k: 'c' + j, label, num: 1, cls, v: r => r.dist[j], f: r => zero(r.dist[j]) }));
 const distTxt = d => `${d[0]} rave, ${d[1]} positive, ${d[2]} mixed, ${d[3]} pan`;
 
 const V = {
@@ -164,11 +172,15 @@ const V = {
     table([
       { k: 'title', label: 'Title', f: bookLink },
       { k: 'author', label: 'Author', cls: 'hide-s' },
-      { k: 'year', label: 'Year', num: 1, cls: 'hide-s' },
+      { k: 'pub', label: 'Publisher', cls: 'hide-s' },
+      { k: 'date', label: 'Date', cls: 'nw hide-s' },
+      { k: 'gtxt', label: 'Genres', cls: 'g hide-s' },
+      { k: 'ov', label: 'Overall', num: 1, cls: 'hide-s', f: r => esc(r.overall) },
       { k: 'n', label: 'Reviews', num: 1 },
-      { k: 'pan', label: 'Pan', num: 1, cls: 'hide-s', v: r => r.dist[3] / r.n, f: r => r.dist[3] || '<span class="d">0</span>' },
+      ...counts('hide-s'),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
       { k: 'adj', label: 'Adjusted', num: 1, f: r => f2(r.adj) },
+      { k: 'isbn', label: 'ISBN', cls: 'nw d hide-s' },
     ], B, { key: 'books', sort: 'adj', noun: 'books' });
   },
   critics() {
@@ -177,6 +189,7 @@ const V = {
       { k: 'name', label: 'Critic', f: cLink },
       { k: 'n', label: 'Reviews', num: 1 },
       { k: 'links', label: 'Outlets', num: 1, cls: 'hide-s' },
+      ...counts('hide-s'),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
       { k: 'vs', label: 'Vs. others', num: 1, f: r => sgn(r.vs) },
     ], C, { key: 'critics', sort: 'n', noun: 'critics' });
@@ -187,7 +200,7 @@ const V = {
       { k: 'name', label: 'Outlet', f: oLink },
       { k: 'n', label: 'Reviews', num: 1 },
       { k: 'links', label: 'Critics', num: 1, cls: 'hide-s' },
-      { k: 'panr', label: 'Pan', num: 1, cls: 'hide-s', f: r => pct(r.panr) },
+      ...counts('hide-s'),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
       { k: 'vs', label: 'Vs. others', num: 1, f: r => sgn(r.vs) },
     ], O, { key: 'outlets', sort: 'n', noun: 'outlets' });
