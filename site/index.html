@@ -16,24 +16,34 @@ nav { display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; margin-b
 nav a { color: var(--dim); }
 nav a.on { color: var(--fg); }
 nav .n { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
-.bar { display: flex; gap: 16px; align-items: baseline; border-bottom: 1px solid var(--fg); margin-bottom: 8px; }
-input { font: inherit; color: inherit; background: none; border: 0; outline: 0; padding: 6px 0; }
-#q { flex: 1; min-width: 0; }
-#min { width: 3.5em; text-align: right; }
+.bar { display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; border-bottom: 1px solid var(--fg); }
+input, select, button { font: inherit; color: inherit; background: none; border: 0; outline: 0; padding: 6px 0; margin: 0; }
+select, button { color: var(--dim); cursor: pointer; }
+select { field-sizing: content; max-width: 220px; }
+select.set { color: var(--fg); }
+button:hover, select:hover { color: var(--fg); }
+#q { flex: 1; min-width: 160px; }
+#min { width: 2.5em; text-align: right; -moz-appearance: textfield; }
+#min::-webkit-inner-spin-button, #min::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .bar label { color: var(--dim); white-space: nowrap; }
-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.chips { display: flex; gap: 16px; flex-wrap: wrap; min-height: 8px; padding: 8px 0 0; color: var(--dim); }
+.chips:empty { padding: 0; }
+.chips a b { font-weight: normal; color: var(--fg); }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin-top: 8px; }
 th { font-weight: normal; color: var(--dim); text-align: left; padding: 6px 12px 6px 0; cursor: pointer; user-select: none; white-space: nowrap; }
 th.on { color: var(--fg); }
+th[title] { text-decoration: underline dotted var(--line); text-underline-offset: 4px; }
 td { padding: 5px 12px 5px 0; border-top: 1px solid var(--line); vertical-align: top; }
 th:last-child, td:last-child { padding-right: 0; }
 .r { text-align: right; white-space: nowrap; }
 .nw { white-space: nowrap; }
-.g { color: var(--dim); min-width: 140px; }
+.f { cursor: pointer; }
+.f:hover { text-decoration: underline; }
 .scroll { overflow-x: auto; }
-@media (max-width: 640px) { body { padding: 24px 16px 96px; } }
 .d { color: var(--dim); }
 h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .meta { color: var(--dim); margin-bottom: 16px; }
+.meta a:hover { color: var(--fg); }
 .desc { max-width: 640px; margin: 0 0 32px; }
 .rev { padding: 12px 0; border-top: 1px solid var(--line); }
 .rev .h { color: var(--dim); }
@@ -41,7 +51,7 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .rev p { margin: 4px 0 0; max-width: 680px; }
 #more { height: 1px; }
 .empty { color: var(--dim); padding: 24px 0; }
-@media (max-width: 640px) { .hide-s { display: none; } }
+@media (max-width: 640px) { body { padding: 24px 16px 96px; } .hide-s { display: none; } }
 </style>
 </head>
 <body>
@@ -52,9 +62,15 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
   <span class="n" id="count"></span>
 </nav>
 <div id="head"></div>
-<div class="bar">
-  <input id="q" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
-  <label>min reviews <input id="min" type="number" min="1" value="1"></label>
+<div id="controls">
+  <div class="bar">
+    <input id="q" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
+    <select id="g" class="bk"><option value="">All genres</option></select>
+    <select id="y" class="bk"><option value="">All years</option></select>
+    <label>min reviews <input id="min" type="number" min="1" inputmode="numeric"></label>
+    <button id="csv" title="Download the rows shown as CSV">csv</button>
+  </div>
+  <div class="chips" id="chips"></div>
 </div>
 <div id="out"><p class="empty">Loading…</p></div>
 <div id="more"></div>
@@ -65,12 +81,18 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const f2 = x => x == null || isNaN(x) ? '' : x.toFixed(2);
 const sgn = x => x == null || isNaN(x) ? '' : (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(2);
-const pct = x => x == null || isNaN(x) ? '' : Math.round(x * 100) + '%';
 const int = x => x.toLocaleString('en-US');
 const enc = encodeURIComponent;
 const fold = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
-let B = [], C = [], O = [], R = [], bySlug = {}, shards = 128;
+const TIP = {
+  adj: 'Mean pulled toward the overall mean (3.27) as if the book had 10 extra average reviews, so books with few reviews do not dominate',
+  vs: 'Average gap between this rating and the mean of the other reviews of the same book (books with 4+ reviews; shown at 20+)',
+  loo: 'Mean of the other reviews of this book',
+  overall: "Book Marks' overall label",
+};
+
+let B = [], C = [], O = [], R = [], bySlug = {}, cByName = {}, oByName = {}, shards = 128;
 const cache = {};
 
 function shardOf(slug) { let h = 0; for (const ch of slug) h = (Math.imul(h, 31) + ch.codePointAt(0)) >>> 0; return h % shards; }
@@ -83,61 +105,89 @@ async function detail(slug) {
 async function load() {
   const [books, idx] = await Promise.all(['books', 'index'].map(f => fetch(`data/${f}.json`).then(r => r.json())));
   shards = idx.shards;
-  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn, overall], i) => ({
-    i, slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, gtxt: genres.join(', '), dist, overall,
+  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn, overall]) => ({
+    slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, dist, overall,
     ov: { rave: 4, positive: 3, mixed: 2, pan: 1 }[overall] ?? null,
-    n: dist[0] + dist[1] + dist[2] + dist[3], mean, adj, isbn, sum: 0, cnt: 0,
-    hay: fold([title, author, pub, date.slice(0, 4), genres.join(' '), isbn].join(' ')),
+    n: dist[0] + dist[1] + dist[2] + dist[3], mean, adj, sum: 0, cnt: 0,
+    hay: fold([title, author, pub, isbn].join(' ')),
   }));
   B.forEach(b => bySlug[b.slug] = b);
-  C = idx.critics.map((name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, dist: [0, 0, 0, 0], set: new Set(), hay: fold(name) }));
-  O = idx.outlets.map((name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, dist: [0, 0, 0, 0], set: new Set(), hay: fold(name) }));
+  const ent = (name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, dist: [0, 0, 0, 0], set: new Set(), hay: fold(name) });
+  C = idx.critics.map(ent); O = idx.outlets.map(ent);
   R = idx.reviews.map(([b, v, c, o]) => ({ b: B[b], v, c: C[c], o: O[o] }));
   for (const r of R) { r.b.sum += r.v; r.b.cnt++; }
   for (const r of R) {
-    const others = r.b.cnt >= 4 ? (r.b.sum - r.v) / (r.b.cnt - 1) : null;
     r.loo = r.b.cnt > 1 ? (r.b.sum - r.v) / (r.b.cnt - 1) : null;
     for (const [e, other] of [[r.c, r.o], [r.o, r.c]]) {
       if (!e) continue;
-      e.n++; e.sum += r.v;
+      e.n++; e.sum += r.v; e.dist[4 - r.v]++;
       if (other) e.set.add(other.i);
-      if (others != null) { e.dev += r.v - others; e.dn++; }
-      e.dist[4 - r.v]++;
+      if (r.b.cnt >= 4) { e.dev += r.v - r.loo; e.dn++; }
     }
   }
   for (const e of [...C, ...O]) { e.mean = e.sum / e.n; e.vs = e.dn >= 20 ? e.dev / e.dn : null; e.links = e.set.size; }
   C = C.filter(c => c.n); O = O.filter(o => o.n);
+  C.forEach(c => cByName[c.name] = c); O.forEach(o => oByName[o.name] = o);
+
+  const gc = {}; B.forEach(b => b.genres.forEach(g => gc[g] = (gc[g] || 0) + 1));
+  $('#g').insertAdjacentHTML('beforeend', Object.keys(gc).sort().map(g => `<option value="${esc(g)}">${esc(g)} (${int(gc[g])})</option>`).join(''));
+  const years = [...new Set(B.map(b => b.year).filter(Boolean))].sort((a, b) => b - a);
+  $('#y').insertAdjacentHTML('beforeend', years.map(y => `<option>${y}</option>`).join(''));
   route();
+}
+
+// ---- state lives in the URL: #/view/arg?q=&g=&y=&a=&p=&s=&d=&min= ----
+let S = {};
+function parse() {
+  const [path, qs = ''] = location.hash.slice(1).split('?');
+  const [, view = 'books', ...rest] = path.split('/');
+  const p = new URLSearchParams(qs);
+  return { view: V[view] ? view : 'books', arg: rest.length ? decodeURIComponent(rest.join('/')) : '', p };
+}
+function href(view, arg = '', params = {}) {
+  const p = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v != null));
+  return `#/${view}${arg ? '/' + enc(arg) : ''}${[...p].length ? '?' + p : ''}`;
+}
+function sync() {
+  const t = T || {};
+  const params = { q: S.q, g: S.g, y: S.y, a: S.a, p: S.p, min: S.min != t.defMin ? S.min : '', s: t.sort !== t.defSort ? t.sort : '', d: t.dir !== t.defDir ? t.dir : '' };
+  history.replaceState(null, '', href(S.view, S.arg, params));
 }
 
 // ---- table ----
 let T = null;
 function table(cols, rows, def) {
-  const st = saved[def.key] || { sort: def.sort, dir: def.dir ?? -1 };
-  T = { key: def.key, sort: st.sort, dir: st.dir, cols, rows, noun: def.noun, shown: 0 };
-  if (st.q != null) $('#q').value = st.q;
-  if (st.min != null) $('#min').value = st.min;
+  const p = S.params;
+  const sort = p.get('s') && cols.some(c => c.k === p.get('s')) ? p.get('s') : def.sort;
+  const col = cols.find(c => c.k === sort);
+  T = { cols, rows, noun: def.noun, name: def.name, sort, defSort: def.sort, defDir: -1, defMin: def.min,
+        dir: p.get('d') ? +p.get('d') : (sort === def.sort ? -1 : col.num ? -1 : 1), shown: 0 };
+  S.min = p.get('min') || def.min;
+  $('#min').value = S.min;
   draw();
 }
 function filtered() {
-  const terms = fold($('#q').value).split(/\s+/).filter(Boolean);
-  const min = +$('#min').value || 1;
+  const terms = fold(S.q).split(/\s+/).filter(Boolean);
+  const min = +S.min || 1, y = +S.y || 0;
   const col = T.cols.find(c => c.k === T.sort);
-  let rows = T.rows.filter(r => (r.n ?? 99) >= min && terms.every(t => r.hay.includes(t)));
+  const rows = T.rows.filter(r => (r.n ?? 99) >= min
+    && (!S.g || r.genres?.includes(S.g)) && (!y || r.year === y)
+    && (!S.a || r.author === S.a) && (!S.p || r.pub === S.p)
+    && terms.every(t => r.hay.includes(t)));
   const get = col.v || (r => r[col.k]);
   rows.sort((a, b) => {
-    let x = get(a), y = get(b);
-    if (x == null || x === '') return 1; if (y == null || y === '') return -1;
-    return (typeof x === 'string' ? x.localeCompare(y) : x - y) * T.dir;
+    const x = get(a), z = get(b);
+    if (x == null || x === '') return 1; if (z == null || z === '') return -1;
+    return (typeof x === 'string' ? x.localeCompare(z) : x - z) * T.dir;
   });
   return rows;
 }
 function draw() {
   T.view = filtered(); T.shown = 0;
-  const h = T.cols.map(c => `<th class="${c.num ? 'r ' : ''}${c.cls || ''}${c.k === T.sort ? ' on' : ''}" data-k="${c.k}">${c.label}${c.k === T.sort ? (T.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('');
+  const h = T.cols.map(c => `<th class="${c.num ? 'r ' : ''}${c.cls || ''}${c.k === T.sort ? ' on' : ''}" data-k="${c.k}"${c.tip ? ` title="${esc(c.tip)}"` : ''}>${c.label}${c.k === T.sort ? (T.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('');
   $('#out').innerHTML = T.view.length ? `<div class="scroll"><table><thead><tr>${h}</tr></thead><tbody></tbody></table></div>` : '<p class="empty">No matches</p>';
   $('#count').textContent = int(T.view.length) + ' ' + T.noun;
-  more();
+  chips(); sync(); more();
 }
 function more() {
   const tb = $('#out tbody'); if (!tb || T.shown >= T.view.length) return;
@@ -146,119 +196,140 @@ function more() {
     `<tr>${T.cols.map(c => `<td class="${c.num ? 'r ' : ''}${c.cls || ''}">${c.f ? c.f(r) : esc(r[c.k])}</td>`).join('')}</tr>`).join(''));
   T.shown = end;
 }
+function chips() {
+  const set = [['a', 'Author'], ['p', 'Publisher']].filter(([k]) => S[k]);
+  $('#chips').innerHTML = set.map(([k, l]) => `<a href="#" data-clear="${k}">${l}: <b>${esc(S[k])}</b> ×</a>`).join('');
+  $('#g').value = S.g; $('#y').value = S.y;
+  $('#g').classList.toggle('set', !!S.g); $('#y').classList.toggle('set', !!S.y);
+}
+function csv() {
+  const cell = (c, r) => { const v = c.csv ? c.csv(r) : c.v ? c.v(r) : r[c.k]; return v == null ? '' : typeof v === 'number' ? +v.toFixed(3) : v; };
+  const q = s => /[",\n]/.test(s) ? `"${String(s).replace(/"/g, '""')}"` : s;
+  const lines = [T.cols.map(c => q(c.label)).join(','), ...T.view.map(r => T.cols.map(c => q(cell(c, r))).join(','))];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+  a.download = (T.name || T.noun).toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
 new IntersectionObserver(e => e[0].isIntersecting && T && more(), { rootMargin: '800px' }).observe($('#more'));
 $('#out').addEventListener('click', e => {
-  const th = e.target.closest('th'); if (!th) return;
-  const col = T.cols.find(c => c.k === th.dataset.k);
-  if (T.sort === th.dataset.k) T.dir = -T.dir; else { T.sort = col.k; T.dir = col.num ? -1 : 1; }
-  draw();
+  const th = e.target.closest('th');
+  if (th) {
+    const col = T.cols.find(c => c.k === th.dataset.k);
+    if (T.sort === col.k) T.dir = -T.dir; else { T.sort = col.k; T.dir = col.num ? -1 : 1; }
+    return draw();
+  }
+  const f = e.target.closest('[data-fk]');
+  if (f) { S[f.dataset.fk] = f.dataset.fv; draw(); window.scrollTo(0, 0); }
 });
-let tm; $('#q').addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(draw, 80); });
-$('#min').addEventListener('input', () => T && draw());
+$('#chips').addEventListener('click', e => { const a = e.target.closest('[data-clear]'); if (a) { e.preventDefault(); S[a.dataset.clear] = ''; draw(); } });
+let tm; $('#q').addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => { S.q = $('#q').value; draw(); }, 80); });
+$('#g').addEventListener('change', () => { S.g = $('#g').value; draw(); });
+$('#y').addEventListener('change', () => { S.y = $('#y').value; draw(); });
+$('#min').addEventListener('input', () => { S.min = $('#min').value; draw(); });
+$('#csv').addEventListener('click', csv);
 
-// ---- views ----
+// ---- cells ----
 const bookLink = b => `<a href="#/book/${enc(b.slug)}">${esc(b.title)}</a>`;
 const cLink = c => c ? `<a href="#/critic/${enc(c.name)}">${esc(c.name)}</a>` : '<span class="d">Unsigned</span>';
 const oLink = o => o ? `<a href="#/outlet/${enc(o.name)}">${esc(o.name)}</a>` : '';
+const filt = (k, v) => v ? `<span class="f" data-fk="${k}" data-fv="${esc(v)}" title="Show only ${esc(v)}">${esc(v)}</span>` : '';
 const zero = x => x ? int(x) : '<span class="d">0</span>';
-const counts = (cls = '') => ['Rave', 'Positive', 'Mixed', 'Pan'].map((label, j) =>
+const counts = (cls = 'hide-s') => ['Rave', 'Positive', 'Mixed', 'Pan'].map((label, j) =>
   ({ k: 'c' + j, label, num: 1, cls, v: r => r.dist[j], f: r => zero(r.dist[j]) }));
 const distTxt = d => `${d[0]} rave, ${d[1]} positive, ${d[2]} mixed, ${d[3]} pan`;
 
+// ---- views ----
 const V = {
   books() {
-    setMin(1);
-    head('');
     table([
       { k: 'title', label: 'Title', f: bookLink },
-      { k: 'author', label: 'Author', cls: 'hide-s' },
-      { k: 'pub', label: 'Publisher', cls: 'hide-s' },
+      { k: 'author', label: 'Author', cls: 'hide-s', f: r => filt('a', r.author) },
+      { k: 'pub', label: 'Publisher', cls: 'hide-s', f: r => filt('p', r.pub) },
       { k: 'date', label: 'Date', cls: 'nw hide-s' },
-      { k: 'gtxt', label: 'Genres', cls: 'g hide-s' },
-      { k: 'ov', label: 'Overall', num: 1, cls: 'hide-s', f: r => esc(r.overall) },
+      { k: 'ov', label: 'Overall', num: 1, cls: 'hide-s', tip: TIP.overall, f: r => esc(r.overall), csv: r => r.overall },
       { k: 'n', label: 'Reviews', num: 1 },
-      ...counts('hide-s'),
+      ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
-      { k: 'adj', label: 'Adjusted', num: 1, f: r => f2(r.adj) },
-      { k: 'isbn', label: 'ISBN', cls: 'nw d hide-s' },
-    ], B, { key: 'books', sort: 'adj', noun: 'books' });
+      { k: 'adj', label: 'Adjusted', num: 1, tip: TIP.adj, f: r => f2(r.adj) },
+    ], B, { sort: 'adj', noun: 'books', min: 1 });
   },
   critics() {
-    setMin(10); head('');
     table([
       { k: 'name', label: 'Critic', f: cLink },
       { k: 'n', label: 'Reviews', num: 1 },
       { k: 'links', label: 'Outlets', num: 1, cls: 'hide-s' },
-      ...counts('hide-s'),
+      ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
-      { k: 'vs', label: 'Vs. others', num: 1, f: r => sgn(r.vs) },
-    ], C, { key: 'critics', sort: 'n', noun: 'critics' });
+      { k: 'vs', label: 'Vs. others', num: 1, tip: TIP.vs, f: r => sgn(r.vs) },
+    ], C, { sort: 'n', noun: 'critics', min: 10 });
   },
   outlets() {
-    setMin(10); head('');
     table([
       { k: 'name', label: 'Outlet', f: oLink },
       { k: 'n', label: 'Reviews', num: 1 },
       { k: 'links', label: 'Critics', num: 1, cls: 'hide-s' },
-      ...counts('hide-s'),
+      ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
-      { k: 'vs', label: 'Vs. others', num: 1, f: r => sgn(r.vs) },
-    ], O, { key: 'outlets', sort: 'n', noun: 'outlets' });
+      { k: 'vs', label: 'Vs. others', num: 1, tip: TIP.vs, f: r => sgn(r.vs) },
+    ], O, { sort: 'n', noun: 'outlets', min: 10 });
   },
-  critic(name) { person(C.find(c => c.name === name), 'critic'); },
-  outlet(name) { person(O.find(o => o.name === name), 'outlet'); },
+  critic(name) { person(cByName[name], 'critic'); },
+  outlet(name) { person(oByName[name], 'outlet'); },
   async book(slug) {
     const b = bySlug[slug]; if (!b) return head('<h1>Not found</h1>');
-    hideBar(true);
-    $('#count').textContent = '';
-    head(`<h1>${esc(b.title)}</h1><div class="meta">${esc(b.author)} · ${esc(b.pub)}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + esc(b.genres.join(', ')) : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
+    const L = (params, text) => `<a href="${href('books', '', params)}">${esc(text)}</a>`;
+    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.author }, b.author)} · ${L({ p: b.pub }, b.pub)}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
     $('#out').innerHTML = '';
     const d = await detail(slug);
-    if (location.hash !== '#/book/' + enc(slug)) return;
-    const cmap = Object.fromEntries(C.map(c => [c.name, c])), omap = Object.fromEntries(O.map(o => [o.name, o]));
+    if (S.view !== 'book' || S.arg !== slug) return;
     $('#head').insertAdjacentHTML('beforeend', d.d ? `<p class="desc">${esc(d.d)}</p>` : '');
-    $('#out').innerHTML = d.r.map(([, v, c, o, url, q]) => `<div class="rev"><div class="h"><b>${LABEL[v]}</b> · ${c ? cLink(cmap[c]) : 'Unsigned'}${o ? ', ' + oLink(omap[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
+    $('#out').innerHTML = d.r.map(([, v, c, o, url, q]) => `<div class="rev"><div class="h"><b>${LABEL[v]}</b> · ${c ? cLink(cByName[c]) : 'Unsigned'}${o ? ', ' + oLink(oByName[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
   },
 };
 
 function person(e, kind) {
   if (!e) return head('<h1>Not found</h1>');
-  const rows = R.filter(r => (kind === 'critic' ? r.c : r.o) === e).map(r => ({
-    ...r.b, b: r.b, v: r.v, loo: r.loo, d: r.loo == null ? null : r.v - r.loo, other: kind === 'critic' ? r.o : r.c,
-    hay: r.b.hay + ' ' + fold(LABEL[r.v]) + ' ' + ((kind === 'critic' ? r.o : r.c)?.hay || ''),
-  }));
-  head(`<h1>${esc(e.name)}</h1><div class="meta">${int(e.n)} reviews · ${int(e.links)} ${kind === 'critic' ? 'outlets' : 'critics'} · mean ${f2(e.mean)}${e.vs != null ? ' · ' + sgn(e.vs) + ' vs. other reviewers of the same books' : ''}</div>`);
-  setMin(1);
+  const isC = kind === 'critic';
+  const rows = R.filter(r => (isC ? r.c : r.o) === e).map(r => {
+    const other = isC ? r.o : r.c;
+    return { ...r.b, b: r.b, v: r.v, loo: r.loo, diff: r.loo == null ? null : r.v - r.loo, other, hay: r.b.hay + ' ' + (other?.hay || '') };
+  });
+  head(`<h1>${esc(e.name)}</h1><div class="meta">${int(e.n)} reviews · ${int(e.links)} ${isC ? 'outlets' : 'critics'} · ${distTxt(e.dist)} · mean ${f2(e.mean)}${e.vs != null ? ' · ' + sgn(e.vs) + ' vs. other reviewers of the same books' : ''}</div>`);
   table([
     { k: 'title', label: 'Book', f: r => bookLink(r.b) },
-    { k: 'author', label: 'Author', cls: 'hide-s' },
-    { k: 'year', label: 'Year', num: 1, cls: 'hide-s' },
-    { k: 'other', label: kind === 'critic' ? 'Outlet' : 'Critic', cls: 'hide-s', v: r => r.other?.name ?? '', f: r => kind === 'critic' ? oLink(r.other) : cLink(r.other) },
-    { k: 'v', label: 'Rating', num: 1, f: r => LABEL[r.v] },
-    { k: 'loo', label: 'Others', num: 1, f: r => f2(r.loo) },
-    { k: 'd', label: 'Diff', num: 1, f: r => sgn(r.d) },
-  ], rows, { key: kind + ':' + e.name, sort: 'year', noun: 'reviews' });
+    { k: 'author', label: 'Author', cls: 'hide-s', f: r => filt('a', r.author) },
+    { k: 'date', label: 'Date', cls: 'nw hide-s' },
+    { k: 'other', label: isC ? 'Outlet' : 'Critic', cls: 'hide-s', v: r => r.other?.name ?? '', f: r => isC ? oLink(r.other) : cLink(r.other) },
+    { k: 'v', label: 'Rating', num: 1, f: r => LABEL[r.v], csv: r => LABEL[r.v] },
+    { k: 'loo', label: 'Others’ mean', num: 1, tip: TIP.loo, f: r => f2(r.loo) },
+    { k: 'diff', label: 'Diff', num: 1, f: r => sgn(r.diff) },
+  ], rows, { sort: 'date', noun: 'reviews', min: 1, name: e.name });
 }
 
 function head(html) { $('#head').innerHTML = html; }
-function setMin(n) { hideBar(false); $('#min').value = n; }
-function hideBar(h) { $('.bar').style.display = h ? 'none' : ''; $('#more').style.display = h ? 'none' : ''; }
 
-let lastView = '';
-const saved = {};
 function route() {
-  const [, view = 'books', arg] = location.hash.match(/^#\/(\w+)(?:\/(.+))?/) || [];
-  const fn = V[view] || V.books;
-  const key = view + (arg || '');
-  if (key !== lastView) {
-    if (T) saved[T.key] = { sort: T.sort, dir: T.dir, q: $('#q').value, min: $('#min').value };
-    $('#q').value = ''; lastView = key; T = null;
-  }
+  const { view, arg, p } = parse();
+  S = { view, arg, params: p, q: p.get('q') || '', g: p.get('g') || '', y: p.get('y') || '', a: p.get('a') || '', p: p.get('p') || '' };
+  $('#q').value = S.q;
+  T = null;
+  const listy = view !== 'book';
+  $('#controls').style.display = $('#more').style.display = listy ? '' : 'none';
+  document.querySelectorAll('.bk').forEach(el => el.style.display = view === 'critics' || view === 'outlets' ? 'none' : '');
+  if (!listy) $('#count').textContent = '';
+  if (view === 'books' || view === 'critics' || view === 'outlets') head('');
   document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.v === view));
-  fn(arg && decodeURIComponent(arg));
-  window.scrollTo(0, 0);
+  V[view](arg);
 }
-addEventListener('hashchange', route);
+let lastPath = '';
+addEventListener('hashchange', () => {
+  const path = location.hash.split('?')[0];
+  route();
+  if (path !== lastPath) window.scrollTo(0, 0);
+  lastPath = path;
+});
 load();
 </script>
 </body>
