@@ -66,6 +66,7 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
   <div class="bar">
     <input id="q" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
     <select id="g" class="bk"><option value="">All genres</option></select>
+    <select id="p" class="bk"><option value="">All publishers</option></select>
     <select id="y" class="bk"><option value="">All years</option></select>
     <label>min reviews <input id="min" type="number" min="1" inputmode="numeric"></label>
     <button id="csv" title="Download the rows shown as CSV">csv</button>
@@ -131,6 +132,10 @@ async function load() {
 
   const gc = {}; B.forEach(b => b.genres.forEach(g => gc[g] = (gc[g] || 0) + 1));
   $('#g').insertAdjacentHTML('beforeend', Object.keys(gc).sort().map(g => `<option value="${esc(g)}">${esc(g)} (${int(gc[g])})</option>`).join(''));
+  const pc = {}; B.forEach(b => b.pub && (pc[b.pub] = (pc[b.pub] || 0) + 1));
+  const sortName = s => s.replace(/^the\s+/i, '');
+  $('#p').insertAdjacentHTML('beforeend', Object.keys(pc).filter(p => pc[p] >= 5).sort((a, b) => sortName(a).localeCompare(sortName(b)))
+    .map(p => `<option value="${esc(p)}">${esc(p)} (${int(pc[p])})</option>`).join(''));
   const years = [...new Set(B.map(b => b.year).filter(Boolean))].sort((a, b) => b - a);
   $('#y').insertAdjacentHTML('beforeend', years.map(y => `<option>${y}</option>`).join(''));
   route();
@@ -197,10 +202,10 @@ function more() {
   T.shown = end;
 }
 function chips() {
-  const set = [['a', 'Author'], ['p', 'Publisher']].filter(([k]) => S[k]);
+  const set = [['a', 'Author']].filter(([k]) => S[k]);
   $('#chips').innerHTML = set.map(([k, l]) => `<a href="#" data-clear="${k}">${l}: <b>${esc(S[k])}</b> ×</a>`).join('');
-  $('#g').value = S.g; $('#y').value = S.y;
-  $('#g').classList.toggle('set', !!S.g); $('#y').classList.toggle('set', !!S.y);
+  if (S.p && ![...$('#p').options].some(o => o.value === S.p)) $('#p').add(new Option(S.p, S.p));
+  for (const k of ['g', 'p', 'y']) { $('#' + k).value = S[k]; $('#' + k).classList.toggle('set', !!S[k]); }
 }
 function csv() {
   const cell = (c, r) => { const v = c.csv ? c.csv(r) : c.v ? c.v(r) : r[c.k]; return v == null ? '' : typeof v === 'number' ? +v.toFixed(3) : v; };
@@ -227,6 +232,7 @@ $('#chips').addEventListener('click', e => { const a = e.target.closest('[data-c
 let tm; $('#q').addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => { S.q = $('#q').value; draw(); }, 80); });
 $('#g').addEventListener('change', () => { S.g = $('#g').value; draw(); });
 $('#y').addEventListener('change', () => { S.y = $('#y').value; draw(); });
+$('#p').addEventListener('change', () => { S.p = $('#p').value; draw(); });
 $('#min').addEventListener('input', () => { S.min = $('#min').value; draw(); });
 $('#csv').addEventListener('click', csv);
 
@@ -246,7 +252,6 @@ const V = {
     table([
       { k: 'title', label: 'Title', f: bookLink },
       { k: 'author', label: 'Author', cls: 'hide-s', f: r => filt('a', r.author) },
-      { k: 'pub', label: 'Publisher', cls: 'hide-s', f: r => filt('p', r.pub) },
       { k: 'date', label: 'Date', cls: 'nw hide-s' },
       { k: 'ov', label: 'Overall', num: 1, cls: 'hide-s', tip: TIP.overall, f: r => esc(r.overall), csv: r => r.overall },
       { k: 'n', label: 'Reviews', num: 1 },

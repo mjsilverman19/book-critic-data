@@ -30,6 +30,26 @@ def outlet_key(name):
     return k
 
 
+PUB_ALIAS = {
+    "fsg": "farrar straus and giroux", "farrar straus giroux": "farrar straus and giroux",
+    "ww norton": "norton", "w w norton": "norton", "harpercollins": "harper", "harper collins": "harper",
+    "william morrow": "morrow", "grove atlantic": "grove",
+}
+
+
+def publisher_key(name):
+    k = name.lower().replace("&", "and")
+    k = re.sub(r"\s*/.*$", "", k)  # "Avid Reader Press / Simon & Schuster" -> the imprint
+    k = re.sub(r"\s*;.*$", "", k)  # "Liveright; 1 edition"
+    k = re.sub(r",?\s*(19|20)\d\d$", "", k)  # "..., 2017"
+    k = k.replace("strauss", "straus")
+    k = re.sub(r"\b(alfred a\.?|the)\b", "", k)
+    k = re.sub(r"\b(books?|press|publishing|publishers|corporation|group|inc\.?|llc|ltd|and company|and co\.?|company|editions?|usa|us)\b", "", k)
+    k = re.sub(r"[^a-z0-9 ]", "", k)
+    k = re.sub(r"\s+", " ", k).strip()
+    return PUB_ALIAS.get(k, k)
+
+
 def shard(slug):
     h = 0
     for ch in slug:
@@ -108,6 +128,13 @@ def main():
             [int(r["idx"] or 0), v, r["critic"].strip(), outlet_name.get(outlet_key(r["outlet"]), ""), r["review_url"], r["pull_quote"].strip()]
         )
 
+    # merge publisher spellings ("Graywolf", "Graywolf Press"), display the most common one
+    pspell = defaultdict(Counter)
+    for b in books:
+        if b["publisher"].strip():
+            pspell[publisher_key(b["publisher"])][b["publisher"].strip()] += 1
+    pub_name = {k: c.most_common(1)[0][0] for k, c in pspell.items()}
+
     out_books = []
     for b in books:
         n = int(b["review_count_parsed"] or 0)
@@ -119,7 +146,7 @@ def main():
             genres = []
         adj = round((n * m + PRIOR_N * PRIOR_MEAN) / (n + PRIOR_N), 3) if m is not None else None
         out_books.append([
-            b["slug"], b["title"], b["author"], b["publisher"], d, genres,
+            b["slug"], b["title"], b["author"], pub_name.get(publisher_key(b["publisher"]), ""), d, genres,
             [int(b["n_rave"] or 0), int(b["n_positive"] or 0), int(b["n_mixed"] or 0), int(b["n_pan"] or 0)],
             m, adj, b["isbn"], b["overall_label"],
         ])

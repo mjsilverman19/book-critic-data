@@ -9,7 +9,7 @@ python3 site/build.py
 python3 -m http.server -d site
 ```
 
-The build merges outlet spellings ("The Guardian" and "The Guardian (UK)") and critic spellings that share a slug or differ only in case. "Vs. others" is the mean difference between a critic's or outlet's rating and the average of the other reviews of the same book, counted only for books with four or more reviews and shown only when there are at least 20 such reviews.
+The build merges outlet spellings ("The Guardian" and "The Guardian (UK)"), publisher spellings ("Graywolf" and "Graywolf Press"; co-published titles go to the first-named imprint), and critic spellings that share a slug or differ only in case. "Vs. others" is the mean difference between a critic's or outlet's rating and the average of the other reviews of the same book, counted only for books with four or more reviews and shown only when there are at least 20 such reviews.
 
 ## Files
 
