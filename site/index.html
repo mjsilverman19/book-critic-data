@@ -68,6 +68,7 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 <nav>
   <a href="#/books" data-v="books">Books</a>
   <a href="#/critics" data-v="critics">Critics</a>
+  <a href="#/authors" data-v="authors">Authors</a>
   <a href="#/outlets" data-v="outlets">Outlets</a>
   <span class="n" id="count"></span>
 </nav>
@@ -93,16 +94,18 @@ const f2 = x => x == null || isNaN(x) ? '' : x.toFixed(2);
 const sgn = x => x == null || isNaN(x) ? '' : (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(2);
 const int = x => x.toLocaleString('en-US');
 const enc = encodeURIComponent;
-const fold = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const fold = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[.'\u2019]/g, '');
 
 const TIP = {
   adj: 'Mean pulled toward the overall mean (3.27) as if the book had 10 extra average reviews, so books with few reviews do not dominate',
   vs: 'Average gap between this rating and the mean of the other reviews of the same book (books with 4+ reviews; shown at 20+)',
   loo: 'Mean of the other reviews of this book',
   overall: "Book Marks' overall label",
+  adjA: 'Mean of all reviews of the author’s books, pulled toward the overall mean (3.27) as if they had 10 extra average reviews',
 };
 
-let B = [], C = [], O = [], R = [], bySlug = {}, cByName = {}, oByName = {}, shards = 128;
+const baseAuthor = s => String(s || '').replace(/,?\s*(?:\(|;)?\s*\b(?:trans(?:lated)?\.?|tr\.?|ed(?:ited)?\.?|illus(?:trated)?\.?|intro(?:duction|duced)?\.?)\s+(?:by\b)?.*$/i, '').replace(/[\s,;]+$/, '').trim();
+let B = [], C = [], O = [], A = [], R = [], bySlug = {}, cByName = {}, oByName = {}, shards = 128;
 const cache = {};
 
 function shardOf(slug) { let h = 0; for (const ch of slug) h = (Math.imul(h, 31) + ch.codePointAt(0)) >>> 0; return h % shards; }
@@ -121,7 +124,7 @@ async function load() {
     n: dist[0] + dist[1] + dist[2] + dist[3], mean, adj, sum: 0, cnt: 0,
     hay: fold([title, author, pub, isbn].join(' ')),
   }));
-  B.forEach(b => bySlug[b.slug] = b);
+  B.forEach(b => { bySlug[b.slug] = b; b.aut = baseAuthor(b.author); });
   const ent = (name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, dist: [0, 0, 0, 0], set: new Set(), hay: fold(name) });
   C = idx.critics.map(ent); O = idx.outlets.map(ent);
   R = idx.reviews.map(([b, v, c, o]) => ({ b: B[b], v, c: C[c], o: O[o] }));
@@ -138,6 +141,14 @@ async function load() {
   for (const e of [...C, ...O]) { e.mean = e.sum / e.n; e.vs = e.dn >= 20 ? e.dev / e.dn : null; e.links = e.set.size; }
   C = C.filter(c => c.n); O = O.filter(o => o.n);
   C.forEach(c => cByName[c.name] = c); O.forEach(o => oByName[o.name] = o);
+  const am = {};
+  for (const b of B) {
+    if (!b.aut) continue;
+    const a = am[b.aut] ??= { name: b.aut, books: 0, n: 0, sum: 0, dist: [0, 0, 0, 0], hay: fold(b.aut) };
+    a.books++; a.n += b.cnt; a.sum += b.sum; b.dist.forEach((x, j) => a.dist[j] += x);
+  }
+  A = Object.values(am).filter(a => a.n);
+  for (const a of A) { a.mean = a.sum / a.n; a.adj = (a.sum + 10 * 3.27) / (a.n + 10); }
 
   const gc = {}; B.forEach(b => b.genres.forEach(g => gc[g] = (gc[g] || 0) + 1));
   $('#g').insertAdjacentHTML('beforeend', Object.keys(gc).sort().map(g => `<option value="${esc(g)}">${esc(g)} (${int(gc[g])})</option>`).join(''));
@@ -186,7 +197,7 @@ function filtered() {
   const col = T.cols.find(c => c.k === T.sort);
   const rows = T.rows.filter(r => (r.n ?? 99) >= min
     && (!S.g || r.genres?.includes(S.g)) && (!y || r.year === y)
-    && (!S.a || r.author === S.a) && (!S.p || r.pub === S.p)
+    && (!S.a || r.aut === S.a) && (!S.p || r.pub === S.p)
     && terms.every(t => r.hay.includes(t)));
   const get = col.v || (r => r[col.k]);
   rows.sort((a, b) => {
@@ -252,7 +263,7 @@ const V = {
   books() {
     table([
       { k: 'title', label: 'Title', f: titleCell },
-      { k: 'author', label: 'Author', cls: 'desk', f: r => filt('a', r.author) },
+      { k: 'author', label: 'Author', cls: 'desk', f: r => r.author ? `<span class="f" data-fk="a" data-fv="${esc(r.aut)}" title="Show only ${esc(r.aut)}">${esc(r.author)}</span>` : '' },
       { k: 'date', label: 'Date', cls: 'nw', f: dateCell },
       { k: 'ov', label: 'Overall', num: 1, tip: TIP.overall, f: r => esc(r.overall) },
       { k: 'n', label: 'Reviews', num: 1 },
@@ -271,6 +282,16 @@ const V = {
       { k: 'vs', label: 'Vs. others', num: 1, tip: TIP.vs, f: r => sgn(r.vs) },
     ], C, { sort: 'n', noun: 'critics', min: 10 });
   },
+  authors() {
+    table([
+      { k: 'name', label: 'Author', f: r => `<a href="${href('books', '', { a: r.name })}">${esc(r.name)}</a>` },
+      { k: 'books', label: 'Books', num: 1 },
+      { k: 'n', label: 'Reviews', num: 1 },
+      ...counts(),
+      { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
+      { k: 'adj', label: 'Adjusted', num: 1, tip: TIP.adjA, f: r => f2(r.adj) },
+    ], A, { sort: 'n', noun: 'authors', min: 10 });
+  },
   outlets() {
     table([
       { k: 'name', label: 'Outlet', f: oLink },
@@ -286,7 +307,7 @@ const V = {
   async book(slug) {
     const b = bySlug[slug]; if (!b) return head('<h1>Not found</h1>');
     const L = (params, text) => `<a href="${href('books', '', params)}">${esc(text)}</a>`;
-    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.author }, b.author)} · ${L({ p: b.pub }, b.pub)}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
+    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.aut }, b.author)} · ${L({ p: b.pub }, b.pub)}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
     $('#out').innerHTML = '';
     const d = await detail(slug);
     if (S.view !== 'book' || S.arg !== slug) return;
@@ -305,7 +326,7 @@ function person(e, kind) {
   head(`<h1>${esc(e.name)}</h1><div class="meta">${int(e.n)} reviews · ${int(e.links)} ${isC ? 'outlets' : 'critics'} · ${distTxt(e.dist)} · mean ${f2(e.mean)}${e.vs != null ? ' · ' + sgn(e.vs) + ' vs. other reviewers of the same books' : ''}</div>`);
   table([
     { k: 'title', label: 'Book', f: r => titleCell(r.b) },
-    { k: 'author', label: 'Author', cls: 'desk', f: r => filt('a', r.author) },
+    { k: 'author', label: 'Author', cls: 'desk', f: r => r.author ? `<span class="f" data-fk="a" data-fv="${esc(r.aut)}" title="Show only ${esc(r.aut)}">${esc(r.author)}</span>` : '' },
     { k: 'date', label: 'Date', cls: 'nw', f: dateCell },
     { k: 'v', label: 'Rating', num: 1, f: r => LABEL[r.v] },
     { k: 'loo', label: 'Others’ mean', num: 1, tip: TIP.loo, f: r => f2(r.loo) },
@@ -323,9 +344,9 @@ function route() {
   T = null;
   const listy = view !== 'book';
   $('#controls').style.display = $('#more').style.display = listy ? '' : 'none';
-  document.querySelectorAll('.bk').forEach(el => el.style.display = view === 'critics' || view === 'outlets' ? 'none' : '');
+  document.querySelectorAll('.bk').forEach(el => el.style.display = ['critics', 'outlets', 'authors'].includes(view) ? 'none' : '');
   if (!listy) $('#count').textContent = '';
-  if (view === 'books' || view === 'critics' || view === 'outlets') head('');
+  if (['books', 'critics', 'outlets', 'authors'].includes(view)) head('');
   document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.v === view));
   V[view](arg);
 }
