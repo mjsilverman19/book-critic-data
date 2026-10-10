@@ -10,6 +10,10 @@ if os.path.exists('nyt_backfill.parquet'):
     crk=set(zip(A[A.source=='complete_review'].book_key,A[A.source=='complete_review'].outlet_key))
     N['also_in_complete_review']=[(b,o) in crk for b,o in zip(N.book_key,N.outlet_key)]
     A=pd.concat([A,N],ignore_index=True)
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'lang.py')).read())
+# the quote model is English-only: leave non-English Complete Review quotes unrated
+ne=(A.rating_method=='model_quote')&~A.pull_quote.map(is_english)
+A.loc[ne,['rating_value','predicted_value']]=np.nan; A.loc[ne,'rating_method']='unrated_non_english'
 A['rating_value']=A.rating_value.astype('Int64'); A['rating_label']=A.rating_value.map(LAB)
 A['predicted_value']=A.predicted_value.round(3)
 A.loc[A.book_key.fillna('').str.startswith('|'),'book_key']=None

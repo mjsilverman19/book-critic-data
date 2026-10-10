@@ -123,7 +123,7 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 | `source` | `complete_review` or `guardian_api` |
 | `book_key` | Normalized title plus author surname, used to group reviews of one book across sources |
 | `bookmarks_slug` | The matching Book Marks book, when there is one |
-| `rating_method` | `cr_grade` (Complete Review grade, mapped), `model_quote`, or `model_fulltext` |
+| `rating_method` | `cr_grade` (Complete Review grade, mapped), `model_quote`, `model_fulltext`, or `unrated_non_english` (a German, French or other non-English quote, which the English-trained model does not score) |
 | `native_grade` | Complete Review letter grade, or a Guardian star rating where the Guardian printed one |
 | `predicted_value` | Model score on the 1 to 4 scale, before bucketing into a label |
 | `in_bookmarks` | The same review (same book and outlet, or same URL) is already in the Book Marks tables |
@@ -137,6 +137,10 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 **Quote model.** A logistic regression on word and character n-grams, trained on Book Marks' 121,000 pull quotes and their labels. Tested on books held out of training, its expected score correlates 0.66 with the true rating for a single review and 0.75 with a book's mean rating for books with four or more reviews. Cut points are set so predicted labels match the Book Marks label distribution.
 
 **Guardian full-text model.** A ridge regression on the review text plus summary features from the quote model run over each sentence, trained on the 4,414 Guardian and Observer reviews that Book Marks has already labeled. Cross-validated correlation is 0.65, exact label agreement 60%, within one step 96%.
+
+### In the explorer
+
+The explorer counts backfill reviews alongside Book Marks reviews. Books that are not on Book Marks show "backfill" in the Overall column. On a book page, each backfill review shows its date and is marked "(graded)" for a Complete Review grade or "(predicted)" for a model rating. The source menu limits every table to Book Marks reviews or to backfill reviews. Rows marked `in_bookmarks` or `also_in_complete_review` are left out so no review counts twice.
 
 ### Caveats
 

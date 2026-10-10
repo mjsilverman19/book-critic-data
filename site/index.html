@@ -104,6 +104,7 @@ html.cover-open { overflow: hidden; }
     <select id="g" class="bk"><option value="">All genres</option></select>
     <select id="p" class="bk"><option value="">All publishers</option></select>
     <select id="y" class="bk"><option value="">All years</option></select>
+    <select id="src" title="Which reviews to count"><option value="">All sources</option><option value="bm">Book Marks only</option><option value="bf">Backfill only</option></select>
     <label>min reviews <input id="min" type="number" min="1" inputmode="numeric"></label>
   </div>
   <div class="chips" id="chips"></div>
@@ -121,6 +122,7 @@ const int = x => x.toLocaleString('en-US');
 const enc = encodeURIComponent;
 const fold = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[.'\u2019]/g, '');
 
+const SRC = ['', ' <span class="d" title="Complete Review\u2019s letter grade for this review, mapped to the Book Marks scale">(graded)</span>', ' <span class="d" title="Rating predicted by a model trained on Book Marks labels; see data/backfill/model_metrics.json">(predicted)</span>'];
 const TIP = {
   adj: 'Mean pulled toward the overall mean (3.27) as if the book had 10 extra average reviews, so books with few reviews do not dominate',
   vs: 'Average gap between this rating and the mean of the other reviews of the same book (books with 4+ reviews; shown at 20+)',
@@ -143,20 +145,19 @@ async function detail(slug) {
   return (await cache[k])[slug] || { d: '', r: [] };
 }
 
-async function load() {
-  const [books, idx] = await Promise.all(['books', 'index'].map(f => fetch(`data/${f}.json`).then(r => r.json())));
-  shards = idx.shards;
-  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn, overall]) => ({
-    slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, dist, overall,
-    ov: { rave: 4, positive: 3, mixed: 2, pan: 1 }[overall] ?? null,
-    n: dist[0] + dist[1] + dist[2] + dist[3], mean, adj, sum: 0, cnt: 0,
-    hay: fold([title, author, pub, isbn].join(' ')),
-  }));
-  B.forEach(b => { bySlug[b.slug] = b; b.aut = baseAuthor(b.author); });
+// ---- aggregates, recomputed when the source filter changes ----
+// src: '' all reviews, 'bm' Book Marks only, 'bf' backfill only (Complete Review grades and model-predicted ratings)
+let CA = [], OA = [], RA = [], aggSrc = null;
+function aggregate(src) {
+  if (src === aggSrc) return;
+  aggSrc = src;
+  const keep = r => !src || (src === 'bm' ? r.src === 0 : r.src > 0);
+  for (const b of B) { b.dist = [0, 0, 0, 0]; b.sum = 0; b.cnt = 0; }
   const ent = (name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, dist: [0, 0, 0, 0], set: new Set(), hay: fold(name) });
-  C = idx.critics.map(ent); O = idx.outlets.map(ent);
-  R = idx.reviews.map(([b, v, c, o]) => ({ b: B[b], v, c: C[c], o: O[o] }));
-  for (const r of R) { r.b.sum += r.v; r.b.cnt++; }
+  C = CA.map(ent); O = OA.map(ent); cByName = {}; oByName = {};
+  R = RA.filter(keep).map(r => ({ b: r.b, v: r.v, c: C[r.ci], o: O[r.oi], src: r.src }));
+  for (const r of R) { r.b.sum += r.v; r.b.cnt++; r.b.dist[4 - r.v]++; }
+  for (const b of B) { b.n = b.cnt; b.mean = b.cnt ? b.sum / b.cnt : null; b.adj = b.cnt ? (b.sum + 10 * 3.27) / (b.cnt + 10) : null; }
   for (const r of R) {
     r.loo = r.b.cnt > 1 ? (r.b.sum - r.v) / (r.b.cnt - 1) : null;
     for (const [e, other] of [[r.c, r.o], [r.o, r.c]]) {
@@ -171,13 +172,26 @@ async function load() {
   C.forEach(c => cByName[c.name] = c); O.forEach(o => oByName[o.name] = o);
   const am = {};
   for (const b of B) {
-    if (!b.aut) continue;
+    if (!b.aut || !b.cnt) continue;
     const a = am[b.aut] ??= { name: b.aut, books: 0, n: 0, sum: 0, dist: [0, 0, 0, 0], hay: fold(b.aut) };
     a.books++; a.n += b.cnt; a.sum += b.sum; b.dist.forEach((x, j) => a.dist[j] += x);
   }
   A = Object.values(am).filter(a => a.n);
   for (const a of A) { a.mean = a.sum / a.n; a.adj = (a.sum + 10 * 3.27) / (a.n + 10); }
+}
 
+async function load() {
+  const [books, idx] = await Promise.all(['books', 'index'].map(f => fetch(`data/${f}.json`).then(r => r.json())));
+  shards = idx.shards;
+  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn, overall, bf]) => ({
+    slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, overall, bf: !!bf,
+    ov: { rave: 4, positive: 3, mixed: 2, pan: 1 }[overall] ?? null,
+    hay: fold([title, author, pub, isbn].join(' ')),
+  }));
+  B.forEach(b => { bySlug[b.slug] = b; b.aut = baseAuthor(b.author); });
+  CA = idx.critics; OA = idx.outlets;
+  RA = idx.reviews.map(([b, v, c, o, src]) => ({ b: B[b], v, ci: c, oi: o, src: src || 0 }));
+  aggregate(new URLSearchParams(location.hash.split('?')[1] || '').get('src') || '');
   const gc = {}; B.forEach(b => b.genres.forEach(g => gc[g] = (gc[g] || 0) + 1));
   $('#g').insertAdjacentHTML('beforeend', Object.keys(gc).sort().map(g => `<option value="${esc(g)}">${esc(g)} (${int(gc[g])})</option>`).join(''));
   const pc = {}; B.forEach(b => b.pub && (pc[b.pub] = (pc[b.pub] || 0) + 1));
@@ -203,7 +217,7 @@ function href(view, arg = '', params = {}) {
 }
 function sync() {
   const t = T || {};
-  const params = { q: S.q, g: S.g, y: S.y, a: S.a, p: S.p, min: S.min != t.defMin ? S.min : '', s: t.sort !== t.defSort ? t.sort : '', d: t.dir !== t.defDir ? t.dir : '' };
+  const params = { q: S.q, g: S.g, y: S.y, a: S.a, p: S.p, src: S.src, min: S.min != t.defMin ? S.min : '', s: t.sort !== t.defSort ? t.sort : '', d: t.dir !== t.defDir ? t.dir : '' };
   history.replaceState(null, '', href(S.view, S.arg, params));
 }
 
@@ -273,6 +287,7 @@ let tm; $('#q').addEventListener('input', () => { clearTimeout(tm); tm = setTime
 $('#g').addEventListener('change', () => { S.g = $('#g').value; draw(); });
 $('#y').addEventListener('change', () => { S.y = $('#y').value; draw(); });
 $('#p').addEventListener('change', () => { S.p = $('#p').value; draw(); });
+$('#src').addEventListener('change', () => { S.src = $('#src').value; aggregate(S.src); $('#src').classList.toggle('set', !!S.src); V[S.view](S.arg); });
 $('#min').addEventListener('input', () => { S.min = $('#min').value; draw(); });
 
 // ---- cells ----
@@ -294,7 +309,7 @@ const V = {
       { k: 'title', label: 'Title', f: titleCell },
       { k: 'author', label: 'Author', cls: 'desk', f: r => r.author ? `<span class="f" data-fk="a" data-fv="${esc(r.aut)}" title="Show only ${esc(r.aut)}">${esc(r.author)}</span>` : '' },
       { k: 'date', label: 'Date', cls: 'nw', f: dateCell },
-      { k: 'ov', label: 'Overall', num: 1, tip: TIP.overall, f: r => esc(r.overall) },
+      { k: 'ov', label: 'Overall', num: 1, tip: TIP.overall, f: r => r.bf ? '<span class="d" title="Not on Book Marks; reviews from the backfill">backfill</span>' : esc(r.overall) },
       { k: 'n', label: 'Reviews', num: 1 },
       ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
@@ -336,13 +351,13 @@ const V = {
   async book(slug) {
     const b = bySlug[slug]; if (!b) return head('<h1>Not found</h1>');
     const L = (params, text) => `<a href="${href('books', '', params)}">${esc(text)}</a>`;
-    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.aut }, b.author)} · ${L({ p: b.pub }, b.pub)}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
+    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.aut }, b.author)}${b.pub ? ' · ' + L({ p: b.pub }, b.pub) : ''}${b.date ? ' · ' + b.date : ''}${b.bf ? ' · <span title="Not on Book Marks. Reviews come from Complete Review and the Guardian; see data/backfill">pre-Book Marks backfill</span>' : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
     $('#out').innerHTML = '';
     const d = await detail(slug);
     if (S.view !== 'book' || S.arg !== slug) return;
     showBookCover(b, d.cover);
     $('#head').insertAdjacentHTML('beforeend', d.d ? `<p class="desc">${esc(d.d)}</p>` : '');
-    $('#out').innerHTML = d.r.map(([, v, c, o, url, q]) => `<div class="rev"><div class="h"><b>${LABEL[v]}</b> · ${c ? cLink(cByName[c]) : 'Unsigned'}${o ? ', ' + oLink(oByName[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
+    $('#out').innerHTML = d.r.filter(([, , , , , , src]) => !S.src || (S.src === 'bm' ? !src : src)).map(([, v, c, o, url, q, src, date]) => `<div class="rev"><div class="h"><b>${LABEL[v]}</b>${SRC[src || 0]}${date ? ' · ' + esc(date) : ''} · ${c ? cLink(cByName[c]) : 'Unsigned'}${o ? ', ' + oLink(oByName[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
   },
 };
 
@@ -402,7 +417,9 @@ function showBookCover(book, value) {
 function route() {
   if (coverDialog.open) coverDialog.close();
   const { view, arg, p } = parse();
-  S = { view, arg, params: p, q: p.get('q') || '', g: p.get('g') || '', y: p.get('y') || '', a: p.get('a') || '', p: p.get('p') || '' };
+  S = { view, arg, params: p, q: p.get('q') || '', g: p.get('g') || '', y: p.get('y') || '', a: p.get('a') || '', p: p.get('p') || '', src: p.get('src') || '' };
+  aggregate(S.src);
+  $('#src').value = S.src; $('#src').classList.toggle('set', !!S.src);
   $('#q').value = S.q;
   T = null;
   const listy = view !== 'book';

@@ -70,6 +70,42 @@ def main():
         seen.add(k)
         rows.append(r)
 
+    # ---- backfill (data/backfill): pre-Book Marks reviews from Complete Review and the Guardian ----
+    # src codes: 0 Book Marks, 1 Complete Review grade, 2 model-predicted
+    for r in rows:
+        r["src"], r["date"] = 0, ""
+    bf_path = DATA / "backfill" / "reviews_backfill.csv"
+    bf_books = {}
+    if bf_path.exists():
+        bm_slugs = {b["slug"] for b in books}
+        for r in read("backfill/reviews_backfill.csv"):
+            if r["rating_label"] not in LABELS or not r["book_key"] or r["in_bookmarks"] == "True" or r["also_in_complete_review"] == "True":
+                continue
+            slug = r["bookmarks_slug"] if r["bookmarks_slug"] in bm_slugs else "bf-" + re.sub(r"[^a-z0-9]+", "-", r["book_key"].lower()).strip("-")
+            if slug.startswith("bf-"):
+                bk = bf_books.setdefault(slug, {"slug": slug, "title": "", "author": "", "year": "", "first": "", "sources": set()})
+                bk["title"] = bk["title"] or r["title"]
+                bk["author"] = bk["author"] or r["author"]
+                yr = r["book_year"][:4] if re.match(r"^1[5-9]\d\d|^20\d\d", r["book_year"] or "") else ""
+                bk["year"] = bk["year"] or yr
+                d = r["review_date"] if re.match(r"^(1[89]|20)\d\d", r["review_date"] or "") else ""
+                if d and (not bk["first"] or d < bk["first"]):
+                    bk["first"] = d
+                bk["sources"].add(r["source"])
+            grade = f" (CR grade {r['native_grade']})" if r["rating_method"] == "cr_grade" else ""
+            rows.append({
+                "book_slug": slug, "idx": "", "rating_label": r["rating_label"], "critic": r["critic"] or "", "critic_slug": "",
+                "outlet": r["outlet"] or "", "review_url": r["review_url"] or r["source_url"] or "", "pull_quote": (r["pull_quote"] or "").strip(),
+                "src": 1 if r["rating_method"] == "cr_grade" else 2, "date": (r["review_date"] or "")[:10], "via": r["source"],
+            })
+        for bk in bf_books.values():
+            books.append({
+                "slug": bk["slug"], "title": bk["title"], "author": bk["author"], "publisher": "",
+                "date_published": bk["year"] or bk["first"][:4], "genres": "[]", "isbn": "", "overall_label": "",
+                "description": "", "cover_url": "", "bf": "1",
+            })
+
+
     # merge outlet spellings, display the most common one
     spell = defaultdict(Counter)
     for r in rows:
@@ -123,9 +159,10 @@ def main():
         v = LABELS[r["rating_label"]]
         c = intern(r["critic"].strip(), critics, critic_idx) if r["critic"].strip() else -1
         o = intern(outlet_name[outlet_key(r["outlet"])], outlets, outlet_idx) if r["outlet"].strip() else -1
-        index.append([b, v, c, o])
+        index.append([b, v, c, o, r["src"]])
         detail[shard(r["book_slug"])][r["book_slug"]]["r"].append(
-            [int(r["idx"] or 0), v, r["critic"].strip(), outlet_name.get(outlet_key(r["outlet"]), ""), r["review_url"], r["pull_quote"].strip()]
+            [int(r["idx"] or 0) if r["src"] == 0 else 1000 + len(detail[shard(r["book_slug"])][r["book_slug"]]["r"]), v, r["critic"].strip(),
+             outlet_name.get(outlet_key(r["outlet"]), ""), r["review_url"], r["pull_quote"].strip(), r["src"], r["date"]]
         )
 
     # merge publisher spellings ("Graywolf", "Graywolf Press"), display the most common one
@@ -137,6 +174,9 @@ def main():
 
     out_books = []
     for b in books:
+        if b.get("bf"):
+            out_books.append([b["slug"], b["title"], b["author"], "", b["date_published"], [], [0, 0, 0, 0], None, None, "", "", 1])
+            continue
         n = int(b["review_count_parsed"] or 0)
         m = float(b["mean_score"]) if b["mean_score"] else None
         d = b["date_published"] if re.match(r"^(19|20)\d\d-", b["date_published"] or "") else ""
@@ -148,9 +188,13 @@ def main():
         out_books.append([
             b["slug"], b["title"], b["author"], pub_name.get(publisher_key(b["publisher"]), ""), d, genres,
             [int(b["n_rave"] or 0), int(b["n_positive"] or 0), int(b["n_mixed"] or 0), int(b["n_pan"] or 0)],
-            m, adj, b["isbn"], b["overall_label"],
+            m, adj, b["isbn"], b["overall_label"], 0,
         ])
         detail[shard(b["slug"])][b["slug"]]["d"] = b["description"].strip()
+        detail[shard(b["slug"])][b["slug"]]["cover"] = b["cover_url"].strip()
+    for b in books:
+        if b.get("bf"):
+            detail[shard(b["slug"])][b["slug"]].setdefault("cover", "")
         detail[shard(b["slug"])][b["slug"]]["cover"] = b["cover_url"].strip()
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -162,6 +206,7 @@ def main():
         for v in d.values():
             v["r"].sort()
         dump(OUT / "reviews" / f"{i}.json", d)
+    print(f"{len(bf_books)} backfill books")
     print(f"{len(out_books)} books, {len(index)} reviews, {len(critics)} critics, {len(outlets)} outlets")
 
 
