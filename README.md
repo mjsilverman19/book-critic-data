@@ -2,7 +2,7 @@
 
 A dataset of professional book reviews, each reduced to a rating of rave, positive, mixed or pan, with a static explorer and a personal shelf that recommends books from critics whose judgments match yours.
 
-The main review set covers 17,362 books and 120,972 reviews from 2,415 outlets and about 20,000 critics, mostly for books published 2015 to 2026, crawled from a public review aggregator on October 9, 2026 and refreshed daily. A backfill adds 93,285 older reviews from The Complete Review, the Guardian and the New York Times, reaching back to 1990 for the newspapers and earlier for Complete Review. Together the explorer holds about 62,000 books, 192,000 reviews, 30,000 critics and 2,700 outlets.
+The main review set covers about 62,000 books, 192,000 reviews, 30,000 critics and 2,700 outlets.
 
 - [Explorer](#explorer)
 - [Shelf and recommendations](#shelf-and-recommendations)
