@@ -52,7 +52,22 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .rev p { margin: 4px 0 0; max-width: 680px; }
 #more { height: 1px; }
 .empty { color: var(--dim); padding: 24px 0; }
+body.book-page { display: grid; grid-template-columns: minmax(0, 1fr) 240px; column-gap: 64px; }
+.book-page nav { grid-column: 1 / -1; }
+.book-page #head, .book-page #out { grid-column: 1; }
+.book-page #head { grid-row: 2; }
+.book-page #out { grid-row: 3; }
+#book-cover[hidden] { display: none; }
+#book-cover { grid-column: 2; grid-row: 2 / 4; align-self: start; position: sticky; top: 32px; }
+#book-cover img { display: block; width: 100%; height: auto; max-height: 380px; object-fit: contain;
+  object-position: top center; border-radius: 3px; }
+@media (max-width: 900px) {
+  body.book-page { grid-template-columns: minmax(0, 1fr) 160px; column-gap: 32px; }
+  #book-cover img { max-height: 250px; }
+}
 @media (max-width: 640px) {
+  body.book-page { display: block; }
+  #book-cover { position: static; width: 140px; margin: 0 0 28px; }
   body { padding: 24px 16px 96px; font-size: 13px; }
   th, td { padding-right: 10px; }
   td { white-space: nowrap; }
@@ -74,6 +89,7 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
   <span class="n" id="count"></span>
 </nav>
 <div id="head"></div>
+<aside id="book-cover" aria-label="Book cover" hidden></aside>
 <div id="controls">
   <div class="bar">
     <input id="q" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
@@ -316,6 +332,7 @@ const V = {
     $('#out').innerHTML = '';
     const d = await detail(slug);
     if (S.view !== 'book' || S.arg !== slug) return;
+    showBookCover(b, d.cover);
     $('#head').insertAdjacentHTML('beforeend', d.d ? `<p class="desc">${esc(d.d)}</p>` : '');
     $('#out').innerHTML = d.r.map(([, v, c, o, url, q]) => `<div class="rev"><div class="h"><b>${LABEL[v]}</b> · ${c ? cLink(cByName[c]) : 'Unsigned'}${o ? ', ' + oLink(oByName[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
   },
@@ -342,12 +359,32 @@ function person(e, kind) {
 
 function head(html) { $('#head').innerHTML = html; }
 
+function showBookCover(book, value) {
+  const cover = $('#book-cover');
+  let url;
+  try { url = new URL(value); } catch { return; }
+  if (url.protocol !== 'https:') return;
+  const img = new Image();
+  img.alt = `Cover of ${book.title}`;
+  img.referrerPolicy = 'no-referrer';
+  img.addEventListener('load', () => {
+    if (S.view === 'book' && S.arg === book.slug) {
+      cover.replaceChildren(img);
+      cover.hidden = false;
+    }
+  });
+  img.src = url.href;
+}
+
 function route() {
   const { view, arg, p } = parse();
   S = { view, arg, params: p, q: p.get('q') || '', g: p.get('g') || '', y: p.get('y') || '', a: p.get('a') || '', p: p.get('p') || '' };
   $('#q').value = S.q;
   T = null;
   const listy = view !== 'book';
+  document.body.classList.toggle('book-page', !listy);
+  $('#book-cover').hidden = true;
+  $('#book-cover').replaceChildren();
   $('#controls').style.display = $('#more').style.display = listy ? '' : 'none';
   document.querySelectorAll('.bk').forEach(el => el.style.display = ['critics', 'outlets', 'authors'].includes(view) ? 'none' : '');
   if (!listy) $('#count').textContent = '';
