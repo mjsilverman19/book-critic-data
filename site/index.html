@@ -64,12 +64,9 @@ body.book-page { display: grid; grid-template-columns: minmax(0, 680px) 160px; c
 #book-cover button { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
 #book-cover button:focus-visible { outline: 2px solid var(--fg); outline-offset: 5px; }
 html.cover-open { overflow: hidden; }
-#cover-dialog { padding: 40px; border: 0; background: transparent; max-width: 100vw; max-height: 100dvh; overflow: auto; }
-#cover-dialog::backdrop { background: rgba(0, 0, 0, .8); }
+#cover-dialog { padding: 0; border: 0; background: transparent; max-width: 100vw; max-height: 100dvh; overflow: auto; outline: none; cursor: zoom-out; }
+#cover-dialog::backdrop { background: #fff; }
 #cover-dialog img { display: block; width: auto; height: auto; max-width: min(80vw, 640px); max-height: 80dvh; margin: auto; }
-#cover-dialog button { position: absolute; top: 0; right: 0; width: 40px; height: 40px; border: 0;
-  border-radius: 50%; color: #fff; background: #333; font: 28px/1 sans-serif; cursor: pointer; }
-#cover-dialog button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 @media (max-width: 900px) {
   body.book-page { grid-template-columns: minmax(0, 1fr) 160px; column-gap: 32px; }
 }
@@ -98,8 +95,7 @@ html.cover-open { overflow: hidden; }
 </nav>
 <div id="head"></div>
 <aside id="book-cover" aria-label="Book cover" hidden></aside>
-<dialog id="cover-dialog" aria-label="Larger book cover">
-  <button type="button" aria-label="Close enlarged cover" autofocus>×</button>
+<dialog id="cover-dialog" aria-label="Larger book cover; click or press Escape to close" tabindex="-1">
   <img alt="" referrerpolicy="no-referrer">
 </dialog>
 <div id="controls">
@@ -372,8 +368,7 @@ function person(e, kind) {
 function head(html) { $('#head').innerHTML = html; }
 
 const coverDialog = $('#cover-dialog');
-coverDialog.querySelector('button').addEventListener('click', () => coverDialog.close());
-coverDialog.addEventListener('click', e => { if (e.target === coverDialog) coverDialog.close(); });
+coverDialog.addEventListener('click', () => coverDialog.close());
 coverDialog.addEventListener('close', () => document.documentElement.classList.remove('cover-open'));
 
 function showBookCover(book, value) {
