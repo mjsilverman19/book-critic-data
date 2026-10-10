@@ -280,7 +280,7 @@
   function exportShelf() {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(shelf, null, 1)], { type: 'application/json' }));
-    a.download = 'bookmarks-shelf.json';
+    a.download = 'shelf.json';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
