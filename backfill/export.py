@@ -16,6 +16,7 @@ ne=(A.rating_method=='model_quote')&~A.pull_quote.map(is_english)
 A.loc[ne,['rating_value','predicted_value']]=np.nan; A.loc[ne,'rating_method']='unrated_non_english'
 A['rating_value']=A.rating_value.astype('Int64'); A['rating_label']=A.rating_value.map(LAB)
 A['predicted_value']=A.predicted_value.round(3)
+A.loc[A.critic.astype(str).str.strip().isin(['.','-','n.a.','']),'critic']=None
 A.loc[A.book_key.fillna('').str.startswith('|'),'book_key']=None
 A['review_year']=A.review_date.astype(str).str[:4]
 cols=['source','book_key','bookmarks_slug','title','author','book_year','outlet','critic','review_date','rating_label','rating_value','rating_method',

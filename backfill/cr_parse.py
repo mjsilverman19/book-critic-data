@@ -6,7 +6,9 @@ def field(t,name):
     return txt(m.group(1)) if m else None
 books=[];revs=[]
 for fn in sorted(os.listdir('cr_html')):
-    t=open('cr_html/'+fn,encoding='latin-1').read()
+    raw=open('cr_html/'+fn,'rb').read()
+    try: t=raw.decode('utf-8')
+    except UnicodeDecodeError: t=raw.decode('cp1252',errors='replace')
     url='https://www.complete-review.com/'+fn.replace('__','/')
     title=field(t,'Title'); author=field(t,'Author')
     if not title:
