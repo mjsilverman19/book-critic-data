@@ -104,7 +104,6 @@ html.cover-open { overflow: hidden; }
     <select id="g" class="bk"><option value="">All genres</option></select>
     <select id="p" class="bk"><option value="">All publishers</option></select>
     <select id="y" class="bk"><option value="">All years</option></select>
-    <select id="src" title="Which reviews to count"><option value="">All sources</option><option value="bm">Book Marks only</option><option value="bf">Backfill only</option></select>
     <label>min reviews <input id="min" type="number" min="1" inputmode="numeric"></label>
   </div>
   <div class="chips" id="chips"></div>
@@ -122,7 +121,6 @@ const int = x => x.toLocaleString('en-US');
 const enc = encodeURIComponent;
 const fold = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[.'\u2019]/g, '');
 
-const SRC = ['', ' <span class="d" title="Complete Review\u2019s letter grade for this review, mapped to the Book Marks scale">(graded)</span>', ' <span class="d" title="Rating predicted by a model trained on Book Marks labels; see data/backfill/model_metrics.json">(predicted)</span>'];
 const TIP = {
   adj: 'Mean pulled toward the overall mean (3.27) as if the book had 10 extra average reviews, so books with few reviews do not dominate',
   vs: 'Average gap between this rating and the mean of the other reviews of the same book (books with 4+ reviews; shown at 20+)',
@@ -156,28 +154,30 @@ function aggregate(src) {
   const ent = (name, i) => ({ i, name, n: 0, sum: 0, dev: 0, dn: 0, dist: [0, 0, 0, 0], set: new Set(), hay: fold(name) });
   C = CA.map(ent); O = OA.map(ent); cByName = {}; oByName = {};
   R = RA.filter(keep).map(r => ({ b: r.b, v: r.v, c: C[r.ci], o: O[r.oi], src: r.src }));
-  for (const r of R) { r.b.sum += r.v; r.b.cnt++; r.b.dist[4 - r.v]++; }
-  for (const b of B) { b.n = b.cnt; b.mean = b.cnt ? b.sum / b.cnt : null; b.adj = b.cnt ? (b.sum + 10 * 3.27) / (b.cnt + 10) : null; }
+  // v 0 = review without a rating: counted in Reviews, left out of the rating counts and means
+  for (const r of R) { r.b.all = (r.b.all || 0) + 1; if (r.v) { r.b.sum += r.v; r.b.cnt++; r.b.dist[4 - r.v]++; } }
+  for (const b of B) { b.n = b.all || 0; b.all = 0; b.mean = b.cnt ? b.sum / b.cnt : null; b.adj = b.cnt ? (b.sum + 10 * 3.27) / (b.cnt + 10) : null; }
   for (const r of R) {
-    r.loo = r.b.cnt > 1 ? (r.b.sum - r.v) / (r.b.cnt - 1) : null;
+    r.loo = r.v && r.b.cnt > 1 ? (r.b.sum - r.v) / (r.b.cnt - 1) : r.v ? null : (r.b.cnt ? r.b.sum / r.b.cnt : null);
     for (const [e, other] of [[r.c, r.o], [r.o, r.c]]) {
       if (!e) continue;
-      e.n++; e.sum += r.v; e.dist[4 - r.v]++;
-      if (other) e.set.add(other.i);
+      e.n++; if (other) e.set.add(other.i);
+      if (!r.v) continue;
+      e.rn = (e.rn || 0) + 1; e.sum += r.v; e.dist[4 - r.v]++;
       if (r.b.cnt >= 4) { e.dev += r.v - r.loo; e.dn++; }
     }
   }
-  for (const e of [...C, ...O]) { e.mean = e.sum / e.n; e.vs = e.dn >= 20 ? e.dev / e.dn : null; e.links = e.set.size; }
+  for (const e of [...C, ...O]) { e.mean = e.rn ? e.sum / e.rn : null; e.vs = e.dn >= 20 ? e.dev / e.dn : null; e.links = e.set.size; }
   C = C.filter(c => c.n); O = O.filter(o => o.n);
   C.forEach(c => cByName[c.name] = c); O.forEach(o => oByName[o.name] = o);
   const am = {};
   for (const b of B) {
-    if (!b.aut || !b.cnt) continue;
+    if (!b.aut || !b.n) continue;
     const a = am[b.aut] ??= { name: b.aut, books: 0, n: 0, sum: 0, dist: [0, 0, 0, 0], hay: fold(b.aut) };
-    a.books++; a.n += b.cnt; a.sum += b.sum; b.dist.forEach((x, j) => a.dist[j] += x);
+    a.books++; a.n += b.n; a.rn = (a.rn || 0) + b.cnt; a.sum += b.sum; b.dist.forEach((x, j) => a.dist[j] += x);
   }
   A = Object.values(am).filter(a => a.n);
-  for (const a of A) { a.mean = a.sum / a.n; a.adj = (a.sum + 10 * 3.27) / (a.n + 10); }
+  for (const a of A) { a.mean = a.rn ? a.sum / a.rn : null; a.adj = a.rn ? (a.sum + 10 * 3.27) / (a.rn + 10) : null; }
 }
 
 async function load() {
@@ -287,7 +287,6 @@ let tm; $('#q').addEventListener('input', () => { clearTimeout(tm); tm = setTime
 $('#g').addEventListener('change', () => { S.g = $('#g').value; draw(); });
 $('#y').addEventListener('change', () => { S.y = $('#y').value; draw(); });
 $('#p').addEventListener('change', () => { S.p = $('#p').value; draw(); });
-$('#src').addEventListener('change', () => { S.src = $('#src').value; aggregate(S.src); $('#src').classList.toggle('set', !!S.src); V[S.view](S.arg); });
 $('#min').addEventListener('input', () => { S.min = $('#min').value; draw(); });
 
 // ---- cells ----
@@ -309,7 +308,7 @@ const V = {
       { k: 'title', label: 'Title', f: titleCell },
       { k: 'author', label: 'Author', cls: 'desk', f: r => r.author ? `<span class="f" data-fk="a" data-fv="${esc(r.aut)}" title="Show only ${esc(r.aut)}">${esc(r.author)}</span>` : '' },
       { k: 'date', label: 'Date', cls: 'nw', f: dateCell },
-      { k: 'ov', label: 'Overall', num: 1, tip: TIP.overall, f: r => r.bf ? '<span class="d" title="Not on Book Marks; reviews from the backfill">backfill</span>' : esc(r.overall) },
+      { k: 'ov', label: 'Overall', num: 1, tip: TIP.overall, f: r => esc(r.overall) },
       { k: 'n', label: 'Reviews', num: 1 },
       ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
@@ -351,13 +350,13 @@ const V = {
   async book(slug) {
     const b = bySlug[slug]; if (!b) return head('<h1>Not found</h1>');
     const L = (params, text) => `<a href="${href('books', '', params)}">${esc(text)}</a>`;
-    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.aut }, b.author)}${b.pub ? ' · ' + L({ p: b.pub }, b.pub) : ''}${b.date ? ' · ' + b.date : ''}${b.bf ? ' · <span title="Not on Book Marks. Reviews come from Complete Review and the Guardian; see data/backfill">pre-Book Marks backfill</span>' : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
+    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.aut }, b.author)}${b.pub ? ' · ' + L({ p: b.pub }, b.pub) : ''}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
     $('#out').innerHTML = '';
     const d = await detail(slug);
     if (S.view !== 'book' || S.arg !== slug) return;
     showBookCover(b, d.cover);
     $('#head').insertAdjacentHTML('beforeend', d.d ? `<p class="desc">${esc(d.d)}</p>` : '');
-    $('#out').innerHTML = d.r.filter(([, , , , , , src]) => !S.src || (S.src === 'bm' ? !src : src)).map(([, v, c, o, url, q, src, date]) => `<div class="rev"><div class="h"><b>${LABEL[v]}</b>${SRC[src || 0]}${date ? ' · ' + esc(date) : ''} · ${c ? cLink(cByName[c]) : 'Unsigned'}${o ? ', ' + oLink(oByName[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
+    $('#out').innerHTML = d.r.filter(([, , , , , , src]) => !S.src || (S.src === 'bm' ? !src : src)).map(([, v, c, o, url, q, src, date]) => `<div class="rev"><div class="h"><b>${LABEL[v] || 'review'}</b>${date ? ' · ' + esc(date) : ''} · ${c ? cLink(cByName[c]) : 'Unsigned'}${o ? ', ' + oLink(oByName[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
   },
 };
 
@@ -366,14 +365,14 @@ function person(e, kind) {
   const isC = kind === 'critic';
   const rows = R.filter(r => (isC ? r.c : r.o) === e).map(r => {
     const other = isC ? r.o : r.c;
-    return { ...r.b, b: r.b, v: r.v, loo: r.loo, diff: r.loo == null ? null : r.v - r.loo, other, hay: r.b.hay + ' ' + (other?.hay || '') };
+    return { ...r.b, b: r.b, v: r.v, loo: r.loo, diff: r.loo == null || !r.v ? null : r.v - r.loo, other, hay: r.b.hay + ' ' + (other?.hay || '') };
   });
   head(`<h1>${esc(e.name)}</h1><div class="meta">${int(e.n)} reviews · ${int(e.links)} ${isC ? 'outlets' : 'critics'} · ${distTxt(e.dist)} · mean ${f2(e.mean)}${e.vs != null ? ' · ' + sgn(e.vs) + ' vs. other reviewers of the same books' : ''}</div>`);
   table([
     { k: 'title', label: 'Book', f: r => titleCell(r.b) },
     { k: 'author', label: 'Author', cls: 'desk', f: r => r.author ? `<span class="f" data-fk="a" data-fv="${esc(r.aut)}" title="Show only ${esc(r.aut)}">${esc(r.author)}</span>` : '' },
     { k: 'date', label: 'Date', cls: 'nw', f: dateCell },
-    { k: 'v', label: 'Rating', num: 1, f: r => LABEL[r.v] },
+    { k: 'v', label: 'Rating', num: 1, v: r => r.v || null, f: r => LABEL[r.v] || '<span class="d">unrated</span>' },
     { k: 'loo', label: 'Others’ mean', num: 1, tip: TIP.loo, f: r => f2(r.loo) },
     { k: 'diff', label: 'Diff', num: 1, f: r => sgn(r.diff) },
     { k: 'other', label: isC ? 'Outlet' : 'Critic', cls: 'nw', v: r => r.other?.name ?? '', f: r => isC ? oLink(r.other) : cLink(r.other) },
@@ -419,7 +418,6 @@ function route() {
   const { view, arg, p } = parse();
   S = { view, arg, params: p, q: p.get('q') || '', g: p.get('g') || '', y: p.get('y') || '', a: p.get('a') || '', p: p.get('p') || '', src: p.get('src') || '' };
   aggregate(S.src);
-  $('#src').value = S.src; $('#src').classList.toggle('set', !!S.src);
   $('#q').value = S.q;
   T = null;
   const listy = view !== 'book';

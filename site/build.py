@@ -65,7 +65,7 @@ def main():
     seen, rows = set(), []
     for r in reviews:
         k = (r["book_slug"], r["critic"], r["outlet"], r["pull_quote"])
-        if k in seen or r["rating_label"] not in LABELS:
+        if k in seen or r["rating_label"] not in LABELS:  # Book Marks rows always carry a rating
             continue
         seen.add(k)
         rows.append(r)
@@ -79,7 +79,8 @@ def main():
     if bf_path.exists():
         bm_slugs = {b["slug"] for b in books}
         for r in read("backfill/reviews_backfill.csv"):
-            if r["rating_label"] not in LABELS or not r["book_key"] or r["in_bookmarks"] == "True" or r["also_in_complete_review"] == "True":
+            # unrated reviews (NYT, non-English quotes) are kept with rating 0: listed on book pages, left out of the averages
+            if not r["book_key"] or r["in_bookmarks"] == "True" or r["also_in_complete_review"] == "True":
                 continue
             slug = r["bookmarks_slug"] if r["bookmarks_slug"] in bm_slugs else "bf-" + re.sub(r"[^a-z0-9]+", "-", r["book_key"].lower()).strip("-")
             if slug.startswith("bf-"):
@@ -98,11 +99,18 @@ def main():
                 "outlet": r["outlet"] or "", "review_url": r["review_url"] or r["source_url"] or "", "pull_quote": (r["pull_quote"] or "").strip(),
                 "src": 1 if r["rating_method"] == "cr_grade" else 2, "date": (r["review_date"] or "")[:10], "via": r["source"],
             })
+        enrich = {}
+        en_path = DATA / "backfill" / "books_enrichment.csv"
+        if en_path.exists():
+            for e in read("backfill/books_enrichment.csv"):
+                enrich["bf-" + re.sub(r"[^a-z0-9]+", "-", e["book_key"].lower()).strip("-")] = e
         for bk in bf_books.values():
+            e = enrich.get(bk["slug"], {})
+            year = bk["year"] or (e.get("first_publish_year") or "")[:4] or bk["first"][:4]
             books.append({
-                "slug": bk["slug"], "title": bk["title"], "author": bk["author"], "publisher": "",
-                "date_published": bk["year"] or bk["first"][:4], "genres": "[]", "isbn": "", "overall_label": "",
-                "description": "", "cover_url": "", "bf": "1",
+                "slug": bk["slug"], "title": bk["title"], "author": bk["author"], "publisher": e.get("publisher", ""),
+                "date_published": year, "genres": "[]", "isbn": e.get("isbn", ""), "overall_label": "",
+                "description": e.get("description", ""), "cover_url": e.get("cover_url", ""), "bf": "1",
             })
 
 
@@ -156,7 +164,7 @@ def main():
         b = book_idx.get(r["book_slug"])
         if b is None:
             continue
-        v = LABELS[r["rating_label"]]
+        v = LABELS.get(r["rating_label"], 0)
         c = intern(r["critic"].strip(), critics, critic_idx) if r["critic"].strip() else -1
         o = intern(outlet_name[outlet_key(r["outlet"])], outlets, outlet_idx) if r["outlet"].strip() else -1
         index.append([b, v, c, o, r["src"]])
@@ -175,7 +183,10 @@ def main():
     out_books = []
     for b in books:
         if b.get("bf"):
-            out_books.append([b["slug"], b["title"], b["author"], "", b["date_published"], [], [0, 0, 0, 0], None, None, "", "", 1])
+            out_books.append([b["slug"], b["title"], b["author"], pub_name.get(publisher_key(b["publisher"]), ""), b["date_published"], [],
+                              [0, 0, 0, 0], None, None, b["isbn"], "", 1])
+            detail[shard(b["slug"])][b["slug"]]["d"] = b["description"].strip()
+            detail[shard(b["slug"])][b["slug"]]["cover"] = b["cover_url"].strip()
             continue
         n = int(b["review_count_parsed"] or 0)
         m = float(b["mean_score"]) if b["mean_score"] else None

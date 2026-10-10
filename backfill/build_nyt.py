@@ -7,7 +7,7 @@ exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('o
 rows=[]
 for f in sorted(glob.glob('nyt/*.json')):
     for x in json.load(open(f)):
-        cw=[re.sub(r'\s*\(book\)\s*$','',k['value'],flags=re.I).strip() for k in x.get('keywords',[]) if k['name']=='creative_works' and '(book)' in k['value'].lower()]
+        cw=[re.sub(r'\s*\(book\)\s*$','',k['value'],flags=re.I).strip() for k in (x.get('keywords') or []) if k['name']=='creative_works' and '(book)' in k['value'].lower()]
         cw=sorted(set(cw),key=len)
         base=[c for c in cw if not any(c!=d and d.lower().startswith(c.lower()) for d in cw)] or cw
         titles={c.split(':')[0].strip().lower() for c in cw}
@@ -20,7 +20,7 @@ for f in sorted(glob.glob('nyt/*.json')):
         m=re.search(r'By ([A-Z][^\d]{2,60}?)\s*\d+\s*pp',lp) or re.search(r'reviews? (?:book|novel|collection|memoir)?.*? by ([A-Z][\w.\' -]+?)(?:;|\(|,|$)',ab)
         if m: a=m.group(1).strip()
         else:
-            ps=[k['value'] for k in x['keywords'] if k['name']=='persons']
+            ps=[k['value'] for k in (x.get('keywords') or []) if k['name']=='persons']
             if ps:
                 p=ps[0].split(', '); a=(' '.join(p[1:]+p[:1])).title()
         rev=x.get('byline',{}).get('original') or ''

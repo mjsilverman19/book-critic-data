@@ -98,12 +98,13 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 
 ## Backfill: reviews before Book Marks
 
-`data/backfill/` extends the data to books reviewed before Book Marks began in 2016. It draws on two sources so far, kept separate from the Book Marks tables so the original crawl stays untouched. Every rating states how it was produced.
+`data/backfill/` extends the data to books reviewed before Book Marks began in 2016. It draws on three sources, kept separate from the Book Marks tables so the original crawl stays untouched. Every rating states how it was produced.
 
 | Source | What it gives | Rating |
 |---|---|---|
 | [The Complete Review](https://www.complete-review.com) | Per-critic review summaries for about 5,600 books, mostly international fiction, with outlet, critic, date and a quote | Orthofer's letter grade for the review where he gives one; otherwise predicted from the quote |
 | Guardian Open Platform | Every review in the Guardian and Observer books section, 1999 onward | Predicted from the full text |
+| NYT Archive API | Daily and Sunday Book Review reviews of single books, 1990 onward | None (see below) |
 
 ### Files
 
@@ -111,6 +112,7 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 |---|---|
 | `data/backfill/reviews_backfill.csv` | One row per review (61,622 rows) |
 | `data/backfill/books_backfill.csv` | One row per book (26,713 rows), with counts of each rating |
+| `data/backfill/books_enrichment.csv` | Summary, cover, publisher, first publication year and ISBN for backfill books, from Open Library, with Wikipedia intros as a fallback summary (CC BY-SA; `wikipedia_url` links the source) |
 | `data/backfill/model_metrics.json` | Validation figures for each rating method |
 | `backfill/` | Scripts that fetch, parse, train and export |
 
@@ -120,15 +122,15 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 
 | Column | Notes |
 |---|---|
-| `source` | `complete_review` or `guardian_api` |
+| `source` | `complete_review`, `guardian_api` or `nyt_api` |
 | `book_key` | Normalized title plus author surname, used to group reviews of one book across sources |
 | `bookmarks_slug` | The matching Book Marks book, when there is one |
-| `rating_method` | `cr_grade` (Complete Review grade, mapped), `model_quote`, `model_fulltext`, or `unrated_non_english` (a German, French or other non-English quote, which the English-trained model does not score) |
+| `rating_method` | `cr_grade` (Complete Review grade, mapped), `model_quote`, `model_fulltext`, `unrated_weak_model` (NYT), or `unrated_non_english` (a German, French or other non-English quote, which the English-trained model does not score) |
 | `native_grade` | Complete Review letter grade, or a Guardian star rating where the Guardian printed one |
 | `predicted_value` | Model score on the 1 to 4 scale, before bucketing into a label |
 | `in_bookmarks` | The same review (same book and outlet, or same URL) is already in the Book Marks tables |
-| `also_in_complete_review` | A Guardian review that Complete Review also lists. Drop these rows to avoid counting a review twice |
-| `pull_quote` | Complete Review's quote, or the Guardian standfirst. No full review text is stored |
+| `also_in_complete_review` | A Guardian or NYT review that Complete Review also lists. Drop these rows to avoid counting a review twice |
+| `pull_quote` | Complete Review's quote, the Guardian standfirst, or the NYT abstract. No full review text is stored |
 
 ### How ratings were made
 
@@ -138,9 +140,11 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 
 **Guardian full-text model.** A ridge regression on the review text plus summary features from the quote model run over each sentence, trained on the 4,414 Guardian and Observer reviews that Book Marks has already labeled. Cross-validated correlation is 0.65, exact label agreement 60%, within one step 96%.
 
+**NYT.** The archive API returns the headline, abstract and first paragraph, not the review. A model on those fields reached only 0.29 correlation with Book Marks labels, too weak to publish as a rating. NYT rows record which books the Times reviewed, when and by whom, with `rating_label` blank and the weak score in `predicted_value`.
+
 ### In the explorer
 
-The explorer counts backfill reviews alongside Book Marks reviews. Books that are not on Book Marks show "backfill" in the Overall column. On a book page, each backfill review shows its date and is marked "(graded)" for a Complete Review grade or "(predicted)" for a model rating. The source menu limits every table to Book Marks reviews or to backfill reviews. Rows marked `in_bookmarks` or `also_in_complete_review` are left out so no review counts twice.
+The explorer treats backfill reviews like Book Marks reviews. Books that are not on Book Marks get their own pages, with covers and summaries from Open Library or Wikipedia where a match was found (`data/backfill/books_enrichment.csv`). Unrated reviews (NYT, and non-English Complete Review quotes) appear on book, critic and outlet pages and in review counts, and are left out of the rating counts and means. Rows marked `in_bookmarks` or `also_in_complete_review` are skipped so no review appears twice.
 
 ### Caveats
 
