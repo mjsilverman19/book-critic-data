@@ -22,26 +22,27 @@
   // ---- rating control on the book page ----
   function mine(slug) {
     const cur = shelf[slug]?.v;
-    return '<span class="d">Your rating</span>' + CHOICES.map(([v, l]) =>
-      `<button type="button" class="tx${cur === v ? ' on' : ''}" data-rate="${v}" aria-pressed="${cur === v}">${l}</button>`).join('');
+    // the same bare select as the genre and year filters: dim until set, then full color
+    return (cur == null ? '' : 'yours ') + `<select id="rate" aria-label="Your rating"${cur == null ? '' : ' class="set"'}>`
+      + `<option value="">${cur == null ? 'rate it' : 'remove'}</option>`
+      + CHOICES.map(([v, l]) => `<option value="${v}"${cur === v ? ' selected' : ''}>${l}</option>`).join('') + '</select>';
   }
   const book = V.book;
   V.book = slug => {
     const done = book(slug);
     const meta = document.querySelector('#head .meta');
-    if (meta) meta.insertAdjacentHTML('afterend', `<div id="mine" role="group" aria-label="Your rating">${mine(slug)}</div>`);
+    if (meta) meta.insertAdjacentHTML('beforeend', ` · <span id="mine">${mine(slug)}</span>`);
     return done;
   };
+  $('#head').addEventListener('change', e => {
+    if (e.target.id !== 'rate') return;
+    const v = e.target.value;
+    if (v === '') delete shelf[S.arg];
+    else shelf[S.arg] = { v: +v, t: shelf[S.arg]?.t || Date.now() };
+    save();
+    $('#mine').innerHTML = mine(S.arg);
+  });
   $('#head').addEventListener('click', e => {
-    const btn = e.target.closest('[data-rate]');
-    if (btn) {
-      const v = +btn.dataset.rate;
-      if (shelf[S.arg]?.v === v) delete shelf[S.arg];
-      else shelf[S.arg] = { v, t: Date.now() };
-      save();
-      $('#mine').innerHTML = mine(S.arg);
-      return;
-    }
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'export') exportShelf();
     if (act === 'import') importShelf();
