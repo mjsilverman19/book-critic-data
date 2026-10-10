@@ -52,6 +52,10 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .rev p { margin: 4px 0 0; max-width: 680px; }
 #more { height: 1px; }
 .empty { color: var(--dim); padding: 24px 0; }
+.empty a { color: var(--fg); }
+button.tx { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+button.tx:hover { color: var(--fg); text-decoration: underline; }
+button.tx.on { color: var(--fg); }
 body.book-page { display: grid; grid-template-columns: minmax(0, 680px) 160px; column-gap: 48px; }
 .book-page nav { grid-column: 1 / -1; }
 .book-page #head, .book-page #out { grid-column: 1; }
@@ -91,6 +95,8 @@ html.cover-open { overflow: hidden; }
   <a href="#/critics" data-v="critics">Critics</a>
   <a href="#/authors" data-v="authors">Authors</a>
   <a href="#/outlets" data-v="outlets">Outlets</a>
+  <a href="#/shelf" data-v="shelf">Shelf</a>
+  <a href="#/foryou" data-v="foryou">For you</a>
   <span class="n" id="count"></span>
 </nav>
 <div id="head"></div>
@@ -227,7 +233,7 @@ function table(cols, rows, def) {
   const p = S.params;
   const sort = p.get('s') && cols.some(c => c.k === p.get('s')) ? p.get('s') : def.sort;
   const col = cols.find(c => c.k === sort);
-  T = { cols, rows, noun: def.noun, name: def.name, sort, defSort: def.sort, defDir: -1, defMin: def.min,
+  T = { cols, rows, noun: def.noun, name: def.name, empty: def.empty, sort, defSort: def.sort, defDir: -1, defMin: def.min,
         dir: p.get('d') ? +p.get('d') : (sort === def.sort ? -1 : col.num ? -1 : 1), shown: 0 };
   S.min = p.get('min') || def.min;
   $('#min').value = S.min;
@@ -252,7 +258,7 @@ function filtered() {
 function draw() {
   T.view = filtered(); T.shown = 0;
   const h = T.cols.map(c => `<th class="${c.num ? 'r ' : ''}${c.cls || ''}${c.k === T.sort ? ' on' : ''}" data-k="${c.k}"${c.tip ? ` title="${esc(c.tip)}"` : ''}>${c.label}${c.k === T.sort ? (T.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('');
-  $('#out').innerHTML = T.view.length ? `<div class="scroll"><table><thead><tr>${h}</tr></thead><tbody></tbody></table></div>` : '<p class="empty">No matches</p>';
+  $('#out').innerHTML = T.view.length ? `<div class="scroll"><table><thead><tr>${h}</tr></thead><tbody></tbody></table></div>` : `<p class="empty">${T.empty ? T.empty() : 'No matches'}</p>`;
   const reviewCount = T.noun === 'reviews' ? '' : ' · ' + int(T.view.reduce((sum, row) => sum + row.n, 0)) + ' reviews';
   $('#count').textContent = int(T.view.length) + ' ' + T.noun + reviewCount;
   chips(); sync(); more();
@@ -419,6 +425,7 @@ function route() {
   S = { view, arg, params: p, q: p.get('q') || '', g: p.get('g') || '', y: p.get('y') || '', a: p.get('a') || '', p: p.get('p') || '', src: p.get('src') || '' };
   aggregate(S.src);
   $('#q').value = S.q;
+  $('#q').placeholder = view === 'shelf' ? 'Search your books' : 'Search';
   T = null;
   const listy = view !== 'book';
   document.body.classList.toggle('book-page', !listy);
@@ -440,6 +447,7 @@ addEventListener('hashchange', () => {
 });
 load();
 </script>
+<script src="shelf.js"></script>
 <script src="preview.js"></script>
 </body>
 </html>

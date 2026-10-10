@@ -6,6 +6,10 @@ This is a copy of [Book Marks](https://bookmarks.reviews), Lit Hub's book review
 
 Hover over a book title (or focus it with the keyboard) for a preview with its cover, synopsis, publication details, and review summary. Previews also work in critic and outlet book lists. Press Escape to dismiss; clicking the title opens the full book page. Covers and descriptions load on demand from the existing review shards, with a fallback when an image or description is unavailable. Touch users can open the title directly.
 
+Each book page has a "Yours" line for rating it rave, positive, mixed or pan, or marking it want to read. Rated and saved books collect on the **Shelf** page, which has the same search and filters as the books table and searches only your books. The shelf is kept in the browser's local storage, with export and import to a JSON file for moving it between browsers.
+
+**For you** ranks books not yet on your shelf by critic affinity. For each critic (or outlet, for unsigned reviews) who reviewed a book you rated, affinity is the sum over shared books of (your rating − 2.5) × (their rating − their own mean), divided by the number of shared books plus 3. Critics with positive affinity then vote on every other book they reviewed, each vote being affinity × (their rating − their own mean). A book's match score is its net vote divided by total voting weight plus 1, plus (adjusted mean − 3.27), plus a small bonus for authors you rated above mixed. The "Why" column names the two agreeing critics who pushed the book up most. All of it runs in the browser on the data the explorer already loads; the code is in `site/shelf.js`.
+
 To run it locally:
 
 ```
