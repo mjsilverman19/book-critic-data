@@ -151,6 +151,7 @@ def main():
             m, adj, b["isbn"], b["overall_label"],
         ])
         detail[shard(b["slug"])][b["slug"]]["d"] = b["description"].strip()
+        detail[shard(b["slug"])][b["slug"]]["cover"] = b["cover_url"].strip()
 
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "reviews").mkdir(exist_ok=True)

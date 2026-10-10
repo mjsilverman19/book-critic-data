@@ -63,6 +63,7 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
   .scroll { margin-right: -16px; padding-right: 16px; }
 }
 </style>
+<link rel="stylesheet" href="preview.css">
 </head>
 <body>
 <nav>
@@ -111,7 +112,10 @@ const cache = {};
 function shardOf(slug) { let h = 0; for (const ch of slug) h = (Math.imul(h, 31) + ch.codePointAt(0)) >>> 0; return h % shards; }
 async function detail(slug) {
   const k = shardOf(slug);
-  cache[k] ??= fetch(`data/reviews/${k}.json`).then(r => r.json());
+  cache[k] ??= fetch(`data/reviews/${k}.json`).then(r => {
+    if (!r.ok) throw new Error('Book details unavailable');
+    return r.json();
+  }).catch(error => { delete cache[k]; throw error; });
   return (await cache[k])[slug] || { d: '', r: [] };
 }
 
@@ -247,7 +251,7 @@ $('#p').addEventListener('change', () => { S.p = $('#p').value; draw(); });
 $('#min').addEventListener('input', () => { S.min = $('#min').value; draw(); });
 
 // ---- cells ----
-const bookLink = b => `<a href="#/book/${enc(b.slug)}">${esc(b.title)}</a>`;
+const bookLink = b => `<a href="#/book/${enc(b.slug)}" data-book-preview="${esc(b.slug)}">${esc(b.title)}</a>`;
 const titleCell = b => bookLink(b) + `<span class="sub">${esc(b.author)}</span>`;
 const dateCell = r => r.date ? `${r.date.slice(0, 4)}<span class="md">${r.date.slice(4)}</span>` : '';
 const cLink = c => c ? `<a href="#/critic/${enc(c.name)}">${esc(c.name)}</a>` : '<span class="d">Unsigned</span>';
@@ -359,5 +363,6 @@ addEventListener('hashchange', () => {
 });
 load();
 </script>
+<script src="preview.js"></script>
 </body>
 </html>
