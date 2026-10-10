@@ -22,14 +22,14 @@
   // ---- rating control on the book page ----
   function mine(slug) {
     const cur = shelf[slug]?.v;
-    return 'Yours ' + CHOICES.map(([v, l]) =>
-      `<button type="button" class="tx${cur === v ? ' on' : ''}" data-rate="${v}" aria-pressed="${cur === v}">${l}</button>`).join(' · ');
+    return '<span class="d">Your rating</span>' + CHOICES.map(([v, l]) =>
+      `<button type="button" class="tx${cur === v ? ' on' : ''}" data-rate="${v}" aria-pressed="${cur === v}">${l}</button>`).join('');
   }
   const book = V.book;
   V.book = slug => {
     const done = book(slug);
     const meta = document.querySelector('#head .meta');
-    if (meta) meta.insertAdjacentHTML('beforeend', `<br><span id="mine">${mine(slug)}</span>`);
+    if (meta) meta.insertAdjacentHTML('afterend', `<div id="mine" role="group" aria-label="Your rating">${mine(slug)}</div>`);
     return done;
   };
   $('#head').addEventListener('click', e => {
