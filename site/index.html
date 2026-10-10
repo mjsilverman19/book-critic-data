@@ -8,7 +8,7 @@
 :root { --fg: #111; --dim: #888; --line: #e6e6e6; --bg: #fff; }
 @media (prefers-color-scheme: dark) { :root { --fg: #e8e8e8; --dim: #777; --line: #262626; --bg: #111; } }
 * { box-sizing: border-box; }
-html { background: var(--bg); color: var(--fg); }
+html { background: var(--bg); color: var(--fg); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { margin: 0 auto; max-width: 1440px; padding: 32px 24px 96px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; }
 a { color: inherit; text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -58,7 +58,7 @@ button.tx:hover { color: var(--fg); text-decoration: underline; }
 button.tx.on { color: var(--fg); }
 h2.sec { font: inherit; margin: 56px 0 2px; }
 .plain th { cursor: default; }
-button.more { margin-top: 12px; }
+button.more { margin-top: 12px; color: var(--dim); }
 body.book-page { display: grid; grid-template-columns: minmax(0, 680px) 160px; column-gap: 48px; }
 .book-page nav { grid-column: 1 / -1; }
 .book-page #head, .book-page #out { grid-column: 1; }
@@ -86,6 +86,7 @@ html.cover-open { overflow: hidden; }
   .sub { display: block; color: var(--dim); }
   .desk, .md { display: none; }
   td:first-child { min-width: 150px; white-space: normal; }
+  td.list { min-width: 240px; white-space: normal; }
   th:first-child, td:first-child { position: sticky; left: 0; background: var(--bg); z-index: 1; }
   .scroll { margin-right: -16px; padding-right: 16px; }
 }

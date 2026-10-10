@@ -125,7 +125,7 @@
     { label: 'Reviews', num: 1, f: r => int(r.n) },
     { label: 'Adjusted', num: 1, tip: TIP.adj, f: r => f2(r.adj) },
     { label: 'Match', num: 1, tip: TIP.match, f: r => f2(r.score) },
-    { label: 'Why', cls: 'nw', f: why },
+    { label: 'Why', cls: 'nw list', f: why },
   ];
   const criticCols = [
     { label: 'Critic', cls: 'nw', f: a => who(a.e) },
@@ -136,7 +136,7 @@
     { label: 'Reviews', num: 1, f: a => int(a.e.n) },
     { label: 'Mean', num: 1, f: a => f2(a.e.mean) },
     { label: 'Vs. others', num: 1, tip: TIP.vs, f: a => sgn(a.e.vs) },
-    { label: 'On your shelf', cls: 'nw', f: a => a.pairs.slice().sort((p, q) => q[1] - p[1]).slice(0, 3)
+    { label: 'On your shelf', cls: 'nw list', f: a => a.pairs.slice().sort((p, q) => q[1] - p[1]).slice(0, 3)
       .map(([b, u, v]) => `${bookLink(b)} <span class="d">${LABEL[v]}${v === u ? '' : ', you ' + LABEL[u]}</span>`).join(', ') + (a.n > 3 ? ` <span class="d">+${a.n - 3}</span>` : '') },
   ];
 
