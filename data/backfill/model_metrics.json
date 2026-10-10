@@ -1,0 +1,109 @@
+{
+ "quote_model": {
+  "n_eval": 48363,
+  "corr": 0.6624,
+  "exact": 0.6231,
+  "within1": 0.9779,
+  "book_corr_n4": 0.7464,
+  "cuts": [
+   2.059392033294505,
+   2.7702964086626443,
+   3.423146772081276
+  ],
+  "note": "grouped-by-book 2 of 5 folds"
+ },
+ "cr_grade_vs_bookmarks": [
+  {
+   "grade": "A",
+   "mean": 3.848,
+   "count": 151
+  },
+  {
+   "grade": "A+",
+   "mean": 3.911,
+   "count": 45
+  },
+  {
+   "grade": "A-",
+   "mean": 3.148,
+   "count": 27
+  },
+  {
+   "grade": "B",
+   "mean": 2.667,
+   "count": 18
+  },
+  {
+   "grade": "B+",
+   "mean": 3.0,
+   "count": 22
+  },
+  {
+   "grade": "B-",
+   "mean": 2.0,
+   "count": 17
+  },
+  {
+   "grade": "C",
+   "mean": 1.6,
+   "count": 10
+  },
+  {
+   "grade": "C+",
+   "mean": 2.0,
+   "count": 3
+  },
+  {
+   "grade": "C-",
+   "mean": 2.25,
+   "count": 4
+  },
+  {
+   "grade": "D",
+   "mean": 2.0,
+   "count": 8
+  },
+  {
+   "grade": "D-",
+   "mean": 1.0,
+   "count": 1
+  },
+  {
+   "grade": "F",
+   "mean": 1.0,
+   "count": 8
+  }
+ ],
+ "cr_grade_map": {
+  "map": {
+   "A+": 4,
+   "A": 4,
+   "A-": 3,
+   "B+": 3,
+   "B": 3,
+   "B-": 2,
+   "C+": 2,
+   "C": 2,
+   "C-": 2,
+   "D+": 1,
+   "D": 1,
+   "D-": 1,
+   "F": 1
+  },
+  "n_overlap": 314,
+  "exact": 0.732484076433121,
+  "within1": 0.9681528662420382,
+  "corr": 0.7841301659512737
+ },
+ "guardian_fulltext_model": {
+  "n_labeled": 4414,
+  "corr": 0.6549292234065027,
+  "exact": 0.5969642048028999,
+  "within1": 0.9610330765745355,
+  "cuts": [
+   2.252478453827556,
+   2.7759753150989557,
+   3.3045821105180613
+  ]
+ }
+}

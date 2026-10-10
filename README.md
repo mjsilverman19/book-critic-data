@@ -95,3 +95,49 @@ A simple average of review scores favors books with very few reviews: 774 books 
 ```
 adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 ```
+
+## Backfill: reviews before Book Marks
+
+`data/backfill/` extends the data to books reviewed before Book Marks began in 2016. It draws on two sources so far, kept separate from the Book Marks tables so the original crawl stays untouched. Every rating states how it was produced.
+
+| Source | What it gives | Rating |
+|---|---|---|
+| [The Complete Review](https://www.complete-review.com) | Per-critic review summaries for about 5,600 books, mostly international fiction, with outlet, critic, date and a quote | Orthofer's letter grade for the review where he gives one; otherwise predicted from the quote |
+| Guardian Open Platform | Every review in the Guardian and Observer books section, 1999 onward | Predicted from the full text |
+
+### Files
+
+| File | Contents |
+|---|---|
+| `data/backfill/reviews_backfill.csv` | One row per review (61,622 rows) |
+| `data/backfill/books_backfill.csv` | One row per book (26,713 rows), with counts of each rating |
+| `data/backfill/model_metrics.json` | Validation figures for each rating method |
+| `backfill/` | Scripts that fetch, parse, train and export |
+
+### Columns
+
+`reviews_backfill.csv` follows the Book Marks reviews schema where it can and adds:
+
+| Column | Notes |
+|---|---|
+| `source` | `complete_review` or `guardian_api` |
+| `book_key` | Normalized title plus author surname, used to group reviews of one book across sources |
+| `bookmarks_slug` | The matching Book Marks book, when there is one |
+| `rating_method` | `cr_grade` (Complete Review grade, mapped), `model_quote`, or `model_fulltext` |
+| `native_grade` | Complete Review letter grade, or a Guardian star rating where the Guardian printed one |
+| `predicted_value` | Model score on the 1 to 4 scale, before bucketing into a label |
+| `in_bookmarks` | The same review (same book and outlet, or same URL) is already in the Book Marks tables |
+| `also_in_complete_review` | A Guardian review that Complete Review also lists. Drop these rows to avoid counting a review twice |
+| `pull_quote` | Complete Review's quote, or the Guardian standfirst. No full review text is stored |
+
+### How ratings were made
+
+**Complete Review grades.** Orthofer grades many of the reviews he lists from A+ to F. Where a review appears in both his data and Book Marks, the grades line up with Book Marks labels: A+ and A average 3.85 to 3.9 on the 1 to 4 scale, A- and B+ 3.0 to 3.1, B 2.7, B- and the Cs 1.6 to 2.25, D and F 1.0 to 2.0. The mapping used is A+/A to rave, A-/B+/B to positive, B- through C- to mixed, D and F to pan. On 314 overlapping reviews it matches the Book Marks label exactly 73% of the time and is within one step 97% of the time.
+
+**Quote model.** A logistic regression on word and character n-grams, trained on Book Marks' 121,000 pull quotes and their labels. Tested on books held out of training, its expected score correlates 0.66 with the true rating for a single review and 0.75 with a book's mean rating for books with four or more reviews. Cut points are set so predicted labels match the Book Marks label distribution.
+
+**Guardian full-text model.** A ridge regression on the review text plus summary features from the quote model run over each sentence, trained on the 4,414 Guardian and Observer reviews that Book Marks has already labeled. Cross-validated correlation is 0.65, exact label agreement 60%, within one step 96%.
+
+### Caveats
+
+Model ratings carry noise at the level of a single review and are better used in aggregate. The quote model learned from Book Marks pull quotes, which are chosen to be quotable, so its scores on other text can run stronger than the review as a whole. Book identification in Guardian reviews is parsed from headlines and publication lines and fails for roundups and essays, which keep their row but have a blank `book_key`. Titles are grouped on the part before any colon, so numbered volumes of one work (Knausgaard's *My Struggle*, for example) share a `book_key`. Complete Review covers international and translated fiction far more than Book Marks does, so the two samples differ in kind as well as in period. Guardian content is used under the Open Platform terms; only short standfirsts and links are redistributed.
