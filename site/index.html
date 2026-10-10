@@ -52,18 +52,17 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .rev p { margin: 4px 0 0; max-width: 680px; }
 #more { height: 1px; }
 .empty { color: var(--dim); padding: 24px 0; }
-body.book-page { display: grid; grid-template-columns: minmax(0, 1fr) 240px; column-gap: 64px; }
+body.book-page { display: grid; grid-template-columns: minmax(0, 680px) 160px; column-gap: 48px; }
 .book-page nav { grid-column: 1 / -1; }
 .book-page #head, .book-page #out { grid-column: 1; }
 .book-page #head { grid-row: 2; }
 .book-page #out { grid-row: 3; }
 #book-cover[hidden] { display: none; }
 #book-cover { grid-column: 2; grid-row: 2 / 4; align-self: start; position: sticky; top: 32px; }
-#book-cover img { display: block; width: 100%; height: auto; max-height: 380px; object-fit: contain;
+#book-cover img { display: block; width: 100%; height: auto; max-height: 250px; object-fit: contain;
   object-position: top center; border-radius: 3px; }
 @media (max-width: 900px) {
   body.book-page { grid-template-columns: minmax(0, 1fr) 160px; column-gap: 32px; }
-  #book-cover img { max-height: 250px; }
 }
 @media (max-width: 640px) {
   body.book-page { display: block; }
