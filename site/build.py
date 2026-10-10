@@ -4,7 +4,7 @@
 
 Writes site/data/*.json, which site/index.html loads. The Pages workflow runs this on deploy.
 """
-import csv, json, re, sys
+import csv, hashlib, json, os, re, sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -217,8 +217,24 @@ def main():
         for v in d.values():
             v["r"].sort()
         dump(OUT / "reviews" / f"{i}.json", d)
+    if os.environ.get("GITHUB_ACTIONS"):
+        stamp_assets()
     print(f"{len(bf_books)} backfill books")
     print(f"{len(out_books)} books, {len(index)} reviews, {len(critics)} critics, {len(outlets)} outlets")
+
+
+def stamp_assets():
+    """Add a content hash to each script and stylesheet link in index.html.
+
+    GitHub Pages serves everything with a 10-minute cache, so after a deploy a browser can pair the new
+    index.html with an old script. Runs only in the Pages workflow so the committed index.html stays clean.
+    """
+    page = ROOT / "site" / "index.html"
+    html = page.read_text(encoding="utf-8")
+    def stamp(m):
+        digest = hashlib.sha1((ROOT / "site" / m.group(2)).read_bytes()).hexdigest()[:10]
+        return f'{m.group(1)}="{m.group(2)}?v={digest}"'
+    page.write_text(re.sub(r'\b(src|href)="([\w-]+\.(?:js|css))"', stamp, html), encoding="utf-8")
 
 
 if __name__ == "__main__":
