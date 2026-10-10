@@ -253,7 +253,7 @@
 
   V.shelf = () => {
     const rows = Object.entries(shelf).filter(([s]) => bySlug[s]).map(([s, x]) => ({ ...bySlug[s], mine: x.v, t: x.t }));
-    head(`<div class="meta">${int(rows.length)} ${rows.length === 1 ? 'book' : 'books'}, kept in this browser · <button type="button" class="tx" data-act="export">export</button> · <button type="button" class="tx" data-act="import">import</button></div>`);
+    head(`<div class="meta">${int(rows.length)} ${rows.length === 1 ? 'book' : 'books'}</div>`);
     table([
       { k: 'title', label: 'Title', f: titleCell },
       authorCol,
