@@ -11,12 +11,15 @@
 //      the critic's. Only critics with two or more shared books and a positive score count as neighbors.
 //   4. Likely rating. Baseline for the reader plus the neighbors' residuals on the book, weighted by similarity
 //      and shrunk toward zero when few neighbors reviewed it.
-//   5. Ranking. Likely rating plus relevance: how heavily the book is covered by the critics who reviewed your
-//      books, how much of your shelf shares its genres, and authors you rated above expectation. Repeat authors
-//      are pushed down so the list does not fill with one writer.
+//   5. Taste votes. Every critic who reviewed a book you rated is weighted by how closely they matched your
+//      rating, damped by the square root of their review count. Their raves of other books count +1 and their
+//      pans −1. This is the strongest signal for finding books you would want.
+//   6. Ranking. Likely rating + 2 × taste votes + genre share + liked authors, with repeat authors pushed down.
+//   7. Critics to follow. Signed critics with 5+ reviews who came within a step of you on every shared book,
+//      listed with their raves you have not shelved.
 // Tested offline by treating 150 critics as readers (some of their ratings as the shelf, the rest hidden):
-// at 20 ratings this orders the hidden books better than the previous affinity score and the adjusted mean,
-// and puts about as many hidden raves in the top 100; at 50 ratings it does better on both.
+// the taste votes roughly double the share of hidden raves found in the top 100 compared with the version
+// before them, and the leniency-adjusted baseline orders hidden books better than the adjusted mean.
 (() => {
   const KEY = 'bookmarks-shelf';
   const LB = 5, LC = 10;   // shrinkage for book quality and reviewer lean (in reviews' worth of zero)
@@ -25,9 +28,9 @@
   const LS = 3;            // similarity is scaled by shared / (shared + LS)
   const MIN_SHARED = 2;    // shared books before a critic counts as a neighbor
   const BETA = 3;          // shrinks the neighbors' adjustment toward zero when their evidence is thin
-  const W_BEAT = 1, W_GENRE = 0.5, W_AUTHOR = 0.3, W_REPEAT = 0.15;
+  const W_TASTE = 2, W_GENRE = 0.5, W_AUTHOR = 0.3, W_REPEAT = 0.15;
   const PICKS = 25;        // recommendations shown at a time beneath the shelf
-  const CRITICS = 10;      // closest critics listed beneath the shelf
+  const CRITICS = 10;      // critics to follow listed beneath the shelf
   const CHOICES = [[4, 'rave'], [3, 'positive'], [2, 'mixed'], [1, 'pan'], [0, 'want to read']];
 
   let shelf = {};
@@ -104,7 +107,7 @@
     const m = model(), { rb, re, rv, res, nb, ne, bb, be, mu, byBook, byRev, ents } = m;
     const all = Object.entries(shelf).filter(([s]) => bySlug[s]).map(([s, x]) => ({ b: bySlug[s], i: bySlug[s]._i, u: x.v }));
     const rated = all.filter(x => x.u);
-    if (!rated.length) return { rows: [], closest: [], rated: 0 };
+    if (!rated.length) return { rows: [], critics: [], rated: 0 };
     const on = new Set(all.map(x => x.i));
 
     // reader lean and residuals
@@ -133,19 +136,33 @@
       if (res[k] > 0) (why.get(i) || why.set(i, []).get(i)).push([a.sim, a.e, rv[k]]); // closest critics first
     }
 
-    // relevance: coverage by the critics who reviewed your books (prolific reviewers damped), genres, authors
-    const beat = new Map(); let top = 0;
-    const covering = new Map();
-    for (const x of all) for (const k of byBook[x.i]) covering.set(re[k], (covering.get(re[k]) || 0) + 1);
-    for (const [id, c] of covering) {
-      const w = c / Math.log2(2 + ne[id]);
-      for (const k of byRev[id]) if (!on.has(rb[k])) beat.set(rb[k], (beat.get(rb[k]) || 0) + w);
+    // taste critics: everyone who reviewed a book you rated, weighted by how closely their rating matched yours
+    // (same 1, one step 2/3, two steps 1/3, opposite 0) and damped by 1 / sqrt(1 + their review count), so a
+    // specialist who agreed with you twice outweighs Kirkus agreeing on everything
+    const taste = new Map();
+    for (const x of rated) for (const k of byBook[x.i]) {
+      const t = taste.get(re[k]) || taste.set(re[k], { id: re[k], e: ents[re[k]], w: 0, n: 0, agreed: 0, pairs: [] }).get(re[k]);
+      const match = 1 - Math.abs(x.u - rv[k]) / 3;
+      t.w += match; t.n++; t.agreed += match >= 0.6; t.pairs.push([x.b, x.u, rv[k]]);
     }
-    for (const [i, w] of beat) { const v = w / Math.sqrt(nb[i] + 1); beat.set(i, v); if (v > top) top = v; }
+    // their verdicts on books you have not shelved: raves count +1, pans −1
+    const vote = new Map(), voters = new Map();
+    for (const t of taste.values()) {
+      t.w /= Math.sqrt(1 + ne[t.id]);
+      for (const k of byRev[t.id]) {
+        const i = rb[k];
+        if (on.has(i)) continue;
+        const c = t.w * (rv[k] - 2.5) / 1.5;
+        vote.set(i, (vote.get(i) || 0) + c);
+        if (rv[k] >= 3) (voters.get(i) || voters.set(i, []).get(i)).push([c, t.e, rv[k]]);
+      }
+    }
+    let top = 0;
+    for (const [i, c] of vote) { const v = c / (nb[i] + 1) ** 0.15; vote.set(i, v); if (Math.abs(v) > top) top = Math.abs(v); }
     const gc = {};
     for (const x of all) for (const g of x.b.genres) gc[g] = (gc[g] || 0) + 1;
-    const au = {}, an = {};
-    for (const x of rated) if (x.b.aut) { au[x.b.aut] = (au[x.b.aut] || 0) + x.e; an[x.b.aut] = (an[x.b.aut] || 0) + 1; }
+    const au = {};
+    for (const x of rated) if (x.b.aut) au[x.b.aut] = (au[x.b.aut] || 0) + x.e;
 
     const rows = [];
     for (let i = 0; i < B.length; i++) {
@@ -155,23 +172,34 @@
       const pred = Math.min(4, Math.max(1, mu + bu + bb[i] + adjust));
       const genre = b.genres.length ? Math.max(...b.genres.map(g => gc[g] || 0)) / all.length : 0;
       const liked = b.aut && au[b.aut] > 0 ? 1 : 0;
-      const rel = W_BEAT * (top ? (beat.get(i) || 0) / top : 0) + W_GENRE * genre + W_AUTHOR * liked;
-      const w = (why.get(i) || []).sort((p, q) => q[0] - p[0]).slice(0, 2);
-      rows.push({ ...b, b, pred, rank: pred + rel, why: w, liked, beat: (beat.get(i) || 0) / (top || 1), genre });
+      const tv = top ? (vote.get(i) || 0) / top : 0;
+      const w = [...(why.get(i) || []), ...(voters.get(i) || [])].sort((p, q) => q[0] - p[0])
+        .filter((x, j, a) => a.findIndex(y => y[1] === x[1]) === j).slice(0, 2);
+      rows.push({ ...b, b, pred, rank: pred + W_TASTE * tv + W_GENRE * genre + W_AUTHOR * liked, why: w, liked, genre });
     }
     rows.sort((p, q) => q.rank - p.rank);
     const seenAut = {};
     for (const r of rows) if (r.aut) { r.rank -= W_REPEAT * (seenAut[r.aut] || 0); seenAut[r.aut] = (seenAut[r.aut] || 0) + 1; }
     rows.sort((p, q) => q.rank - p.rank);
-    const closest = near.sort((p, q) => q.sim - p.sim).slice(0, CRITICS);
-    return { rows, closest, rated: rated.length, bu };
+
+    // critics to follow: signed critics with a body of work (5+ reviews) and raves you have not shelved, who came
+    // within a step of you on every book you share. Ranked by agreement, damped more gently than the votes above
+    // so a critic who matched you twice in 50 reviews leads one who matched once in 5
+    const critics = [...taste.values()].filter(t => cByName[t.e.name] === t.e && ne[t.id] >= 5 && t.agreed === t.n)
+      .map(t => {
+        const raves = byRev[t.id].filter(k => rv[k] === 4 && !on.has(rb[k])).sort((p, q) => bb[rb[q]] - bb[rb[p]]);
+        return { ...t, score: t.pairs.reduce((s, [, u, v]) => s + 1 - Math.abs(u - v) / 3, 0) / Math.log2(2 + ne[t.id]),
+          raves: raves.slice(0, 3).map(k => B[rb[k]]), more: raves.length };
+      })
+      .filter(t => t.more).sort((p, q) => q.score - p.score).slice(0, CRITICS);
+    return { rows, critics, rated: rated.length, bu };
   }
 
   const who = e => cByName[e.name] === e ? cLink(e) : oLink(e);
   const why = r => {
     const out = r.why.map(([, e, v]) => `${who(e)} <span class="d">${LABEL[v]}</span>`);
     if (r.liked) out.push('<span class="d">author you rated well</span>');
-    if (!out.length) out.push(`<span class="d">${r.beat > 0.25 ? 'covered by critics of your books' : r.genre >= 0.25 ? 'in your genres' : 'strong consensus'}</span>`);
+    if (!out.length) out.push(`<span class="d">${r.genre >= 0.25 ? 'in your genres' : 'strong consensus'}</span>`);
     return out.join(', ');
   };
 
@@ -191,28 +219,29 @@
     { label: 'Likely', num: 1, tip: TIP.likely, f: r => `${f2(r.pred)} <span class="d">${LABEL[Math.round(r.pred)]}</span>` },
     { label: 'Why', cls: 'nw list', f: why },
   ];
+  const short = b => `<a href="#/book/${enc(b.slug)}" data-book-preview="${esc(b.slug)}">${esc(b.title.split(/:\s/)[0])}</a>`;
+  const shelfTake = t => t.pairs.slice().sort((p, q) => q[1] - p[1]).slice(0, 3)
+    
+    .map(([b, u, v]) => `${short(b)} <span class="d">${LABEL[v]}${v === u ? '' : ', you ' + LABEL[u]}</span>`).join(', ') + (t.n > 3 ? ` <span class="d">+${t.n - 3}</span>` : '');
   const criticCols = [
-    { label: 'Critic', cls: 'nw', f: a => who(a.e) },
-    { label: 'Agreement', num: 1, tip: TIP.agree, f: a => f2(a.sim) },
-    { label: 'Shared', num: 1, tip: TIP.shared, f: a => int(a.n) },
-    { label: 'Same rating', num: 1, tip: TIP.same, f: a => `${a.pairs.filter(([, u, v]) => u === v).length} of ${a.n}` },
-    { label: 'Within one', num: 1, tip: TIP.within, f: a => `${a.pairs.filter(([, u, v]) => Math.abs(u - v) <= 1).length} of ${a.n}` },
-    { label: 'Lean', num: 1, tip: TIP.lean, f: a => sgn(a.lean) },
-    { label: 'Reviews', num: 1, f: a => int(a.e.n) },
-    { label: 'On your shelf', cls: 'nw list', f: a => a.pairs.slice().sort((p, q) => q[1] - p[1]).slice(0, 3)
-      .map(([b, u, v]) => `${bookLink(b)} <span class="d">${LABEL[v]}${v === u ? '' : ', you ' + LABEL[u]}</span>`).join(', ') + (a.n > 3 ? ` <span class="d">+${a.n - 3}</span>` : '') },
+    { label: 'Critic', cls: 'nw', f: t => who(t.e) },
+    { label: 'On your shelf', cls: 'nw list', tip: TIP.onshelf, f: shelfTake },
+    { label: 'Also raved', cls: 'nw list', tip: TIP.raved, f: t => t.raves.length
+      ? t.raves.map(short).join(', ') + (t.more > t.raves.length ? ` <span class="d">+${t.more - t.raves.length}</span>` : '')
+      : '<span class="d">nothing else unshelved</span>' },
+    { label: 'Reviews', num: 1, f: t => int(t.e.n) },
   ];
 
   let picks = [], shown = 0;
   function below(count) {
-    const { rows, closest, rated } = recommend();
+    const { rows, critics, rated } = recommend();
     if (!count) return $('#below').innerHTML = '';
     if (!rated) return $('#below').innerHTML = `<h2 class="sec">For you</h2><p class="empty">Rate a few books to see recommendations. Books marked want to read are not used.</p>`;
     picks = rows; shown = 0;
     $('#below').innerHTML = `<h2 class="sec">For you</h2><div class="meta">Ranked from ${int(rated)} rated ${rated === 1 ? 'book' : 'books'}${rated < 10 ? '. Recommendations sharpen past ten' : ''}</div><div id="picks"></div>`
-      + `<h2 class="sec">Closest critics</h2>`
-      + (closest.length ? `<div class="meta">Critics who reviewed at least two of your rated books and diverge from the consensus the way you do</div>${plain(criticCols, closest)}`
-        : '<p class="empty">No critic shares two of your rated books yet.</p>');
+      + `<h2 class="sec">Critics to follow</h2>`
+      + (critics.length ? `<div class="meta">Critics who rated your books within a step of you, with what else they raved</div>${plain(criticCols, critics)}`
+        : '<p class="empty">No critic of your rated books agrees with you yet.</p>');
     morePicks();
   }
   function morePicks() {
@@ -242,12 +271,9 @@
   };
   V.foryou = () => location.replace('#/shelf'); // the old For you tab now lives beneath the shelf
   Object.assign(TIP, {
-    likely: 'Predicted rating on the 1–4 scale: the book’s critic-adjusted quality, your own lean, and how critics who share your taste rated it relative to expectations. The list order also weighs how close the book sits to what you read',
-    agree: 'Correlation between how far you and this critic each departed from the expected rating on the books you share, scaled down when you share only a few. 1 would be perfect agreement',
-    shared: 'Books on your shelf that you rated and this critic reviewed',
-    same: 'Shared books where the critic gave the same rating you did',
-    within: 'Shared books where the critic was at most one step from your rating (rave and positive, say)',
-    lean: 'How much kinder (+) or harsher (−) this critic is than others reviewing the same books, in rating steps',
+    likely: 'Predicted rating on the 1–4 scale: the book’s quality with critic leniency removed, adjusted for your own lean. The list order also weighs how the critics who matched you on your books rated it, your genres, and authors you liked',
+    onshelf: 'This critic’s ratings of books you rated, with yours where they differ',
+    raved: 'This critic’s raves you have not shelved, best-regarded first',
   });
 
   // ---- export and import ----
