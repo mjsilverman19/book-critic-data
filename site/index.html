@@ -361,7 +361,7 @@ const V = {
   async book(slug) {
     const b = bySlug[slug]; if (!b) return head('<h1>Not found</h1>');
     const L = (params, text) => `<a href="${href('books', '', params)}">${esc(text)}</a>`;
-    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.aut }, b.author)}${b.pub ? ' · ' + L({ p: b.pub }, b.pub) : ''}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)} · mean ${f2(b.mean)} · adjusted ${f2(b.adj)}</div>`);
+    head(`<h1>${esc(b.title)}</h1><div class="meta">${L({ a: b.aut }, b.author)}${b.pub ? ' · ' + L({ p: b.pub }, b.pub) : ''}${b.date ? ' · ' + b.date : ''}${b.genres.length ? ' · ' + b.genres.map(g => L({ g }, g)).join(', ') : ''}<br>${distTxt(b.dist)}</div>`);
     $('#out').innerHTML = '';
     const d = await detail(slug);
     if (S.view !== 'book' || S.arg !== slug) return;
