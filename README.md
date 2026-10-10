@@ -2,7 +2,11 @@ This is a copy of [Book Marks](https://bookmarks.reviews), Lit Hub's book review
 
 ## Explorer
 
-`site/` is a static browser for the data: search, sortable tables of books, critics and outlets, and a page for each with its reviews. A GitHub Actions workflow builds it from the CSVs and publishes it to GitHub Pages on every push to `main` that touches `data/` or `site/`. To run it locally:
+`site/` is a static browser for the data: search, sortable tables of books, critics and outlets, and a page for each with its reviews. A GitHub Actions workflow builds it from the CSVs and publishes it to GitHub Pages on every push to `main` that touches `data/` or `site/`.
+
+Hover over a book title (or focus it with the keyboard) for a preview with its cover, synopsis, publication details, and review summary. Previews also work in critic and outlet book lists. Press Escape to dismiss; clicking the title opens the full book page. Covers and descriptions load on demand from the existing review shards, with a fallback when an image or description is unavailable. Touch users can open the title directly.
+
+To run it locally:
 
 ```
 python3 site/build.py
