@@ -215,7 +215,8 @@ function draw() {
   T.view = filtered(); T.shown = 0;
   const h = T.cols.map(c => `<th class="${c.num ? 'r ' : ''}${c.cls || ''}${c.k === T.sort ? ' on' : ''}" data-k="${c.k}"${c.tip ? ` title="${esc(c.tip)}"` : ''}>${c.label}${c.k === T.sort ? (T.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('');
   $('#out').innerHTML = T.view.length ? `<div class="scroll"><table><thead><tr>${h}</tr></thead><tbody></tbody></table></div>` : '<p class="empty">No matches</p>';
-  $('#count').textContent = int(T.view.length) + ' ' + T.noun;
+  const reviewCount = T.noun === 'reviews' ? '' : ' · ' + int(T.view.reduce((sum, row) => sum + row.n, 0)) + ' reviews';
+  $('#count').textContent = int(T.view.length) + ' ' + T.noun + reviewCount;
   chips(); sync(); more();
 }
 function more() {
