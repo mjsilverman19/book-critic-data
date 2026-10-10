@@ -240,7 +240,7 @@
     picks = rows; shown = 0;
     $('#below').innerHTML = `<h2 class="sec">For you</h2><div class="meta">Ranked from ${int(rated)} rated ${rated === 1 ? 'book' : 'books'}${rated < 10 ? '. Recommendations sharpen past ten' : ''}</div><div id="picks"></div>`
       + `<h2 class="sec">Critics to follow</h2>`
-      + (critics.length ? `<div class="meta">Critics who rated your books within a step of you, with what else they raved</div>${plain(criticCols, critics)}`
+      + (critics.length ? `<div class="meta">Critics who rated your books similarly</div>${plain(criticCols, critics)}`
         : '<p class="empty">No critic of your rated books agrees with you yet.</p>');
     morePicks();
   }
