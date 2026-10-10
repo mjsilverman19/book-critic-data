@@ -1,16 +1,33 @@
-// Shelf and For you. The shelf lives in this browser's localStorage as { slug: { v, t } },
+// Shelf, For you and Closest critics. The shelf lives in this browser's localStorage as { slug: { v, t } },
 // where v is the reader's rating on the site's scale (4 rave … 1 pan, 0 want to read) and t the time it was set.
-// For you ranks unshelved books by critic affinity: critics whose ratings track the reader's vote for the books they
-// rated above their own average and against those they rated below it. Everything runs on the data index.json already loads.
+//
+// The model, all computed in the browser from the reviews index.json already loads:
+//   1. Baseline. Every rated review is split into global mean + reviewer lean + book quality, fitted by
+//      regularized alternating means. Book quality is the consensus with each reviewer's leniency removed,
+//      and reviewer lean is how much kinder or harsher a critic is than others on the same books.
+//   2. Reader. The reader gets a lean of their own, and each rated book a residual: how much more or less the
+//      reader liked it than the baseline expects.
+//   3. Critic similarity. Over the books both have rated, a shrunk correlation of the reader's residuals with
+//      the critic's. Only critics with two or more shared books and a positive score count as neighbors.
+//   4. Likely rating. Baseline for the reader plus the neighbors' residuals on the book, weighted by similarity
+//      and shrunk toward zero when few neighbors reviewed it.
+//   5. Ranking. Likely rating plus relevance: how heavily the book is covered by the critics who reviewed your
+//      books, how much of your shelf shares its genres, and authors you rated above expectation. Repeat authors
+//      are pushed down so the list does not fill with one writer.
+// Tested offline by treating 150 critics as readers (some of their ratings as the shelf, the rest hidden):
+// at 20 ratings this orders the hidden books better than the previous affinity score and the adjusted mean,
+// and puts about as many hidden raves in the top 100; at 50 ratings it does better on both.
 (() => {
   const KEY = 'bookmarks-shelf';
-  const MID = 2.5;     // midpoint of the 1–4 scale: rave +1.5 … pan −1.5
-  const SHRINK = 3;    // affinity is divided by (shared books + SHRINK), so one shared book counts for little
-  const DAMP = 1;      // added to the evidence weight when turning a candidate's votes into a fit score
-  const QUALITY = 1;   // weight of the book's adjusted mean in the final score
-  const AUTHOR = 0.15; // bonus per point of liking for an author already on the shelf (capped at 3)
-  const PICKS = 25;    // recommendations shown at a time beneath the shelf
-  const CRITICS = 10;  // closest critics listed beneath the shelf
+  const LB = 5, LC = 10;   // shrinkage for book quality and reviewer lean (in reviews' worth of zero)
+  const LU = 3;            // shrinkage for the reader's lean
+  const ALPHA = 0.5;       // added to each sum of squares in the similarity, damping one-book coincidences
+  const LS = 3;            // similarity is scaled by shared / (shared + LS)
+  const MIN_SHARED = 2;    // shared books before a critic counts as a neighbor
+  const BETA = 3;          // shrinks the neighbors' adjustment toward zero when their evidence is thin
+  const W_BEAT = 1, W_GENRE = 0.5, W_AUTHOR = 0.3, W_REPEAT = 0.15;
+  const PICKS = 25;        // recommendations shown at a time beneath the shelf
+  const CRITICS = 10;      // closest critics listed beneath the shelf
   const CHOICES = [[4, 'rave'], [3, 'positive'], [2, 'mixed'], [1, 'pan'], [0, 'want to read']];
 
   let shelf = {};
@@ -48,68 +65,115 @@
     if (act === 'import') importShelf();
   });
 
-  // ---- reviews grouped by book and by reviewer, rebuilt when the source filter changes R ----
+  // ---- review arrays and baseline, rebuilt when the source filter changes R ----
   // A review's reviewer is its critic, or its outlet when unsigned (Kirkus, Publishers Weekly).
-  let builtFor = null, byBook, byRev;
-  function index() {
-    if (builtFor === R) return;
-    builtFor = R; byBook = new Map(); byRev = new Map();
-    const push = (m, k, r) => { const a = m.get(k); a ? a.push(r) : m.set(k, [r]); };
-    const seen = new Set(); // one review per reviewer and book: some critics appear twice, via Book Marks and a backfill source
+  // One review per reviewer and book: some critics appear twice, via Book Marks and a backfill source.
+  let M = null;
+  function model() {
+    if (M?.R === R) return M;
+    B.forEach((b, i) => b._i = i);
+    const rid = new Map(), ents = [], rb = [], re = [], rv = [], seen = new Set();
     for (const r of R) {
       const e = r.c || r.o;
-      if (!r.v || !e || e.mean == null) continue;
-      const k = (r.c ? 'c' : 'o') + e.i + ' ' + r.b.slug;
+      if (!r.v || !e) continue;
+      let id = rid.get(e);
+      if (id === undefined) { id = ents.length; rid.set(e, id); ents.push(e); }
+      const k = id * B.length + r.b._i;
       if (seen.has(k)) continue;
-      seen.add(k);
-      push(byBook, r.b, r); push(byRev, e, r);
+      seen.add(k); rb.push(r.b._i); re.push(id); rv.push(r.v);
     }
+    const n = rv.length, NB = B.length, NE = ents.length;
+    const nb = new Float64Array(NB), ne = new Float64Array(NE), byBook = Array.from({ length: NB }, () => []), byRev = Array.from({ length: NE }, () => []);
+    let mu = 0;
+    for (let k = 0; k < n; k++) { nb[rb[k]]++; ne[re[k]]++; mu += rv[k]; byBook[rb[k]].push(k); byRev[re[k]].push(k); }
+    mu /= n;
+    const bb = new Float64Array(NB), be = new Float64Array(NE);
+    for (let it = 0; it < 6; it++) {
+      const sb = new Float64Array(NB), se = new Float64Array(NE);
+      for (let k = 0; k < n; k++) sb[rb[k]] += rv[k] - mu - be[re[k]];
+      for (let i = 0; i < NB; i++) bb[i] = sb[i] / (nb[i] + LB);
+      for (let k = 0; k < n; k++) se[re[k]] += rv[k] - mu - bb[rb[k]];
+      for (let i = 0; i < NE; i++) be[i] = se[i] / (ne[i] + LC);
+    }
+    const res = new Float64Array(n);
+    for (let k = 0; k < n; k++) res[k] = rv[k] - mu - be[re[k]] - bb[rb[k]];
+    return M = { R, ents, rid, rb, re, rv, res, nb, ne, bb, be, mu, byBook, byRev };
   }
 
   function recommend() {
-    index();
-    const rated = Object.entries(shelf).filter(([s, x]) => x.v && bySlug[s]);
-    // affinity: does the critic rate above their own average the books you rate above the midpoint?
-    const aff = new Map();
-    for (const [s, { v: u }] of rated) {
-      for (const r of byBook.get(bySlug[s]) || []) {
-        const e = r.c || r.o;
-        const a = aff.get(e) || aff.set(e, { e, s: 0, n: 0, pairs: [] }).get(e);
-        a.s += (u - MID) * (r.v - e.mean); a.n++; a.pairs.push([r.b, u, r.v]);
-      }
+    const m = model(), { rb, re, rv, res, nb, ne, bb, be, mu, byBook, byRev, ents } = m;
+    const all = Object.entries(shelf).filter(([s]) => bySlug[s]).map(([s, x]) => ({ b: bySlug[s], i: bySlug[s]._i, u: x.v }));
+    const rated = all.filter(x => x.u);
+    if (!rated.length) return { rows: [], closest: [], rated: 0 };
+    const on = new Set(all.map(x => x.i));
+
+    // reader lean and residuals
+    const bu = rated.reduce((s, x) => s + x.u - mu - bb[x.i], 0) / (rated.length + LU);
+    for (const x of rated) x.e = x.u - mu - bu - bb[x.i];
+
+    // critic similarity on residuals
+    const sims = new Map();
+    for (const x of rated) for (const k of byBook[x.i]) {
+      const a = sims.get(re[k]) || sims.set(re[k], { id: re[k], e: ents[re[k]], num: 0, xu: 0, xc: 0, n: 0, pairs: [] }).get(re[k]);
+      a.num += x.e * res[k]; a.xu += x.e * x.e; a.xc += res[k] * res[k]; a.n++; a.pairs.push([x.b, x.u, rv[k]]);
     }
-    const acc = new Map();
-    const slot = b => acc.get(b) || acc.set(b, { s: 0, w: 0, why: [], au: 0 }).get(b);
-    for (const a of aff.values()) {
-      a.w = a.s / (a.n + SHRINK);
-      if (a.w <= 0) continue; // only critics who agree with you vote, so every reason shown is one
-      for (const r of byRev.get(a.e)) {
-        if (shelf[r.b.slug]) continue;
-        const c = a.w * (r.v - a.e.mean), x = slot(r.b);
-        x.s += c; x.w += Math.abs(a.w);
-        if (c > 0) x.why.push([c, a.e, r.v]);
-      }
+    const near = [];
+    for (const a of sims.values()) {
+      a.sim = a.num / Math.sqrt((a.xu + ALPHA) * (a.xc + ALPHA)) * a.n / (a.n + LS);
+      a.lean = be[a.id];
+      if (a.n >= MIN_SHARED && a.sim > 0) near.push(a);
     }
-    const au = {};
-    for (const [s, { v }] of rated) { const b = bySlug[s]; if (b.aut) au[b.aut] = (au[b.aut] || 0) + v - MID; }
-    for (const b of B) if (b.aut && au[b.aut] > 0 && b.n && !shelf[b.slug]) slot(b).au = Math.min(au[b.aut], 3);
+
+    // neighbors' residuals on other books
+    const S = new Map(), W = new Map(), why = new Map();
+    for (const a of near) for (const k of byRev[a.id]) {
+      const i = rb[k];
+      if (on.has(i)) continue;
+      S.set(i, (S.get(i) || 0) + a.sim * res[k]); W.set(i, (W.get(i) || 0) + a.sim);
+      if (res[k] > 0) (why.get(i) || why.set(i, []).get(i)).push([a.sim, a.e, rv[k]]); // closest critics first
+    }
+
+    // relevance: coverage by the critics who reviewed your books (prolific reviewers damped), genres, authors
+    const beat = new Map(); let top = 0;
+    const covering = new Map();
+    for (const x of all) for (const k of byBook[x.i]) covering.set(re[k], (covering.get(re[k]) || 0) + 1);
+    for (const [id, c] of covering) {
+      const w = c / Math.log2(2 + ne[id]);
+      for (const k of byRev[id]) if (!on.has(rb[k])) beat.set(rb[k], (beat.get(rb[k]) || 0) + w);
+    }
+    for (const [i, w] of beat) { const v = w / Math.sqrt(nb[i] + 1); beat.set(i, v); if (v > top) top = v; }
+    const gc = {};
+    for (const x of all) for (const g of x.b.genres) gc[g] = (gc[g] || 0) + 1;
+    const au = {}, an = {};
+    for (const x of rated) if (x.b.aut) { au[x.b.aut] = (au[x.b.aut] || 0) + x.e; an[x.b.aut] = (an[x.b.aut] || 0) + 1; }
+
     const rows = [];
-    for (const [b, x] of acc) {
-      const fit = x.s / (x.w + DAMP);
-      if (fit <= 0 && !x.au) continue;
-      x.why.sort((p, q) => q[0] - p[0]);
-      rows.push({ ...b, b, fit, au: x.au, why: x.why.slice(0, 2),
-        score: fit + QUALITY * ((b.adj ?? 3.27) - 3.27) + AUTHOR * x.au });
+    for (let i = 0; i < B.length; i++) {
+      if (nb[i] < 3 || on.has(i)) continue;
+      const b = B[i];
+      const adjust = (S.get(i) || 0) / ((W.get(i) || 0) + BETA);
+      const pred = Math.min(4, Math.max(1, mu + bu + bb[i] + adjust));
+      const genre = b.genres.length ? Math.max(...b.genres.map(g => gc[g] || 0)) / all.length : 0;
+      const liked = b.aut && au[b.aut] > 0 ? 1 : 0;
+      const rel = W_BEAT * (top ? (beat.get(i) || 0) / top : 0) + W_GENRE * genre + W_AUTHOR * liked;
+      const w = (why.get(i) || []).sort((p, q) => q[0] - p[0]).slice(0, 2);
+      rows.push({ ...b, b, pred, rank: pred + rel, why: w, liked, beat: (beat.get(i) || 0) / (top || 1), genre });
     }
-    const closest = [...aff.values()].filter(a => a.w > 0 && a.n >= 2).sort((p, q) => q.w - p.w).slice(0, CRITICS);
-    return { rows, closest, rated: rated.length };
+    rows.sort((p, q) => q.rank - p.rank);
+    const seenAut = {};
+    for (const r of rows) if (r.aut) { r.rank -= W_REPEAT * (seenAut[r.aut] || 0); seenAut[r.aut] = (seenAut[r.aut] || 0) + 1; }
+    rows.sort((p, q) => q.rank - p.rank);
+    const closest = near.sort((p, q) => q.sim - p.sim).slice(0, CRITICS);
+    return { rows, closest, rated: rated.length, bu };
   }
 
   const who = e => cByName[e.name] === e ? cLink(e) : oLink(e);
-  const why = r => [
-    ...r.why.map(([, e, v]) => `${who(e)} <span class="d">${LABEL[v]}</span>`),
-    ...(r.au ? ['<span class="d">author on your shelf</span>'] : []),
-  ].join(', ');
+  const why = r => {
+    const out = r.why.map(([, e, v]) => `${who(e)} <span class="d">${LABEL[v]}</span>`);
+    if (r.liked) out.push('<span class="d">author you rated well</span>');
+    if (!out.length) out.push(`<span class="d">${r.beat > 0.25 ? 'covered by critics of your books' : r.genre >= 0.25 ? 'in your genres' : 'strong consensus'}</span>`);
+    return out.join(', ');
+  };
 
   // ---- views ----
   const authorCol = { k: 'author', label: 'Author', cls: 'desk', f: r => r.author ? `<span class="f" data-fk="a" data-fv="${esc(r.aut)}" title="Show only ${esc(r.aut)}">${esc(r.author)}</span>` : '' };
@@ -124,19 +188,17 @@
     { ...authorCol, f: r => esc(r.author) },
     { label: 'Date', cls: 'nw', f: dateCell },
     { label: 'Reviews', num: 1, f: r => int(r.n) },
-    { label: 'Adjusted', num: 1, tip: TIP.adj, f: r => f2(r.adj) },
-    { label: 'Match', num: 1, tip: TIP.match, f: r => f2(r.score) },
+    { label: 'Likely', num: 1, tip: TIP.likely, f: r => `${f2(r.pred)} <span class="d">${LABEL[Math.round(r.pred)]}</span>` },
     { label: 'Why', cls: 'nw list', f: why },
   ];
   const criticCols = [
     { label: 'Critic', cls: 'nw', f: a => who(a.e) },
+    { label: 'Agreement', num: 1, tip: TIP.agree, f: a => f2(a.sim) },
     { label: 'Shared', num: 1, tip: TIP.shared, f: a => int(a.n) },
     { label: 'Same rating', num: 1, tip: TIP.same, f: a => `${a.pairs.filter(([, u, v]) => u === v).length} of ${a.n}` },
     { label: 'Within one', num: 1, tip: TIP.within, f: a => `${a.pairs.filter(([, u, v]) => Math.abs(u - v) <= 1).length} of ${a.n}` },
-    { label: 'Agreement', num: 1, tip: TIP.agree, f: a => f2(a.w) },
+    { label: 'Lean', num: 1, tip: TIP.lean, f: a => sgn(a.lean) },
     { label: 'Reviews', num: 1, f: a => int(a.e.n) },
-    { label: 'Mean', num: 1, f: a => f2(a.e.mean) },
-    { label: 'Vs. others', num: 1, tip: TIP.vs, f: a => sgn(a.e.vs) },
     { label: 'On your shelf', cls: 'nw list', f: a => a.pairs.slice().sort((p, q) => q[1] - p[1]).slice(0, 3)
       .map(([b, u, v]) => `${bookLink(b)} <span class="d">${LABEL[v]}${v === u ? '' : ', you ' + LABEL[u]}</span>`).join(', ') + (a.n > 3 ? ` <span class="d">+${a.n - 3}</span>` : '') },
   ];
@@ -146,10 +208,10 @@
     const { rows, closest, rated } = recommend();
     if (!count) return $('#below').innerHTML = '';
     if (!rated) return $('#below').innerHTML = `<h2 class="sec">For you</h2><p class="empty">Rate a few books to see recommendations. Books marked want to read are not used.</p>`;
-    picks = rows.filter(r => r.n >= 3).sort((p, q) => q.score - p.score); shown = 0;
-    $('#below').innerHTML = `<h2 class="sec">For you</h2><div class="meta">${int(picks.length)} books, ranked from ${int(rated)} rated ${rated === 1 ? 'book' : 'books'}</div><div id="picks"></div>`
+    picks = rows; shown = 0;
+    $('#below').innerHTML = `<h2 class="sec">For you</h2><div class="meta">Ranked from ${int(rated)} rated ${rated === 1 ? 'book' : 'books'}${rated < 10 ? '. Recommendations sharpen past ten' : ''}</div><div id="picks"></div>`
       + `<h2 class="sec">Closest critics</h2>`
-      + (closest.length ? `<div class="meta">Critics who reviewed at least two of your rated books and lean the way you do</div>${plain(criticCols, closest)}`
+      + (closest.length ? `<div class="meta">Critics who reviewed at least two of your rated books and diverge from the consensus the way you do</div>${plain(criticCols, closest)}`
         : '<p class="empty">No critic shares two of your rated books yet.</p>');
     morePicks();
   }
@@ -180,11 +242,12 @@
   };
   V.foryou = () => location.replace('#/shelf'); // the old For you tab now lives beneath the shelf
   Object.assign(TIP, {
-    match: 'How much critics whose ratings track yours liked this book relative to their own average, plus a pull toward its adjusted mean and a small bonus for authors you rated well',
+    likely: 'Predicted rating on the 1–4 scale: the book’s critic-adjusted quality, your own lean, and how critics who share your taste rated it relative to expectations. The list order also weighs how close the book sits to what you read',
+    agree: 'Correlation between how far you and this critic each departed from the expected rating on the books you share, scaled down when you share only a few. 1 would be perfect agreement',
     shared: 'Books on your shelf that you rated and this critic reviewed',
     same: 'Shared books where the critic gave the same rating you did',
     within: 'Shared books where the critic was at most one step from your rating (rave and positive, say)',
-    agree: 'Sum over shared books of (your rating − 2.5) × (their rating − their own mean), divided by shared books + 3. Higher means they rate above their average the books you like',
+    lean: 'How much kinder (+) or harsher (−) this critic is than others reviewing the same books, in rating steps',
   });
 
   // ---- export and import ----
