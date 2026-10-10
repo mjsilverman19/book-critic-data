@@ -56,6 +56,9 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 button.tx { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
 button.tx:hover { color: var(--fg); text-decoration: underline; }
 button.tx.on { color: var(--fg); }
+h2.sec { font: inherit; margin: 56px 0 2px; }
+.plain th { cursor: default; }
+button.more { margin-top: 12px; }
 body.book-page { display: grid; grid-template-columns: minmax(0, 680px) 160px; column-gap: 48px; }
 .book-page nav { grid-column: 1 / -1; }
 .book-page #head, .book-page #out { grid-column: 1; }
@@ -96,7 +99,6 @@ html.cover-open { overflow: hidden; }
   <a href="#/authors" data-v="authors">Authors</a>
   <a href="#/outlets" data-v="outlets">Outlets</a>
   <a href="#/shelf" data-v="shelf">Shelf</a>
-  <a href="#/foryou" data-v="foryou">For you</a>
   <span class="n" id="count"></span>
 </nav>
 <div id="head"></div>
@@ -116,6 +118,7 @@ html.cover-open { overflow: hidden; }
 </div>
 <div id="out"><p class="empty">Loading…</p></div>
 <div id="more"></div>
+<div id="below"></div>
 
 <script>
 const LABEL = ['', 'pan', 'mixed', 'positive', 'rave'];
@@ -431,6 +434,7 @@ function route() {
   document.body.classList.toggle('book-page', !listy);
   $('#book-cover').hidden = true;
   $('#book-cover').replaceChildren();
+  $('#below').innerHTML = '';
   $('#controls').style.display = $('#more').style.display = listy ? '' : 'none';
   document.querySelectorAll('.bk').forEach(el => el.style.display = ['critics', 'outlets', 'authors'].includes(view) ? 'none' : '');
   if (!listy) $('#count').textContent = '';

@@ -9,6 +9,8 @@
   const DAMP = 1;      // added to the evidence weight when turning a candidate's votes into a fit score
   const QUALITY = 1;   // weight of the book's adjusted mean in the final score
   const AUTHOR = 0.15; // bonus per point of liking for an author already on the shelf (capped at 3)
+  const PICKS = 25;    // recommendations shown at a time beneath the shelf
+  const CRITICS = 10;  // closest critics listed beneath the shelf
   const CHOICES = [[4, 'rave'], [3, 'positive'], [2, 'mixed'], [1, 'pan'], [0, 'want to read']];
 
   let shelf = {};
@@ -52,9 +54,13 @@
     if (builtFor === R) return;
     builtFor = R; byBook = new Map(); byRev = new Map();
     const push = (m, k, r) => { const a = m.get(k); a ? a.push(r) : m.set(k, [r]); };
+    const seen = new Set(); // one review per reviewer and book: some critics appear twice, via Book Marks and a backfill source
     for (const r of R) {
       const e = r.c || r.o;
       if (!r.v || !e || e.mean == null) continue;
+      const k = (r.c ? 'c' : 'o') + e.i + ' ' + r.b.slug;
+      if (seen.has(k)) continue;
+      seen.add(k);
       push(byBook, r.b, r); push(byRev, e, r);
     }
   }
@@ -67,8 +73,8 @@
     for (const [s, { v: u }] of rated) {
       for (const r of byBook.get(bySlug[s]) || []) {
         const e = r.c || r.o;
-        const a = aff.get(e) || aff.set(e, { e, s: 0, n: 0 }).get(e);
-        a.s += (u - MID) * (r.v - e.mean); a.n++;
+        const a = aff.get(e) || aff.set(e, { e, s: 0, n: 0, pairs: [] }).get(e);
+        a.s += (u - MID) * (r.v - e.mean); a.n++; a.pairs.push([r.b, u, r.v]);
       }
     }
     const acc = new Map();
@@ -94,7 +100,7 @@
       rows.push({ ...b, b, fit, au: x.au, why: x.why.slice(0, 2),
         score: fit + QUALITY * ((b.adj ?? 3.27) - 3.27) + AUTHOR * x.au });
     }
-    const closest = [...aff.values()].filter(a => a.w > 0 && a.n >= 2).sort((p, q) => q.w - p.w).slice(0, 5);
+    const closest = [...aff.values()].filter(a => a.w > 0 && a.n >= 2).sort((p, q) => q.w - p.w).slice(0, CRITICS);
     return { rows, closest, rated: rated.length };
   }
 
@@ -106,6 +112,52 @@
 
   // ---- views ----
   const authorCol = { k: 'author', label: 'Author', cls: 'desk', f: r => r.author ? `<span class="f" data-fk="a" data-fv="${esc(r.aut)}" title="Show only ${esc(r.aut)}">${esc(r.author)}</span>` : '' };
+
+  // a plain table for the sections beneath the shelf; the shelf itself uses the explorer's sortable table
+  const plain = (cols, rows) => `<div class="scroll"><table class="plain"><thead><tr>${cols.map(c =>
+    `<th class="${c.num ? 'r ' : ''}${c.cls || ''}"${c.tip ? ` title="${esc(c.tip)}"` : ''}>${c.label}</th>`).join('')}</tr></thead><tbody>${rows.map(r =>
+    `<tr>${cols.map(c => `<td class="${c.num ? 'r ' : ''}${c.cls || ''}">${c.f(r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+
+  const pickCols = [
+    { label: 'Title', f: titleCell },
+    { ...authorCol, f: r => esc(r.author) },
+    { label: 'Date', cls: 'nw', f: dateCell },
+    { label: 'Reviews', num: 1, f: r => int(r.n) },
+    { label: 'Adjusted', num: 1, tip: TIP.adj, f: r => f2(r.adj) },
+    { label: 'Match', num: 1, tip: TIP.match, f: r => f2(r.score) },
+    { label: 'Why', cls: 'nw', f: why },
+  ];
+  const criticCols = [
+    { label: 'Critic', cls: 'nw', f: a => who(a.e) },
+    { label: 'Shared', num: 1, tip: TIP.shared, f: a => int(a.n) },
+    { label: 'Same rating', num: 1, tip: TIP.same, f: a => `${a.pairs.filter(([, u, v]) => u === v).length} of ${a.n}` },
+    { label: 'Within one', num: 1, tip: TIP.within, f: a => `${a.pairs.filter(([, u, v]) => Math.abs(u - v) <= 1).length} of ${a.n}` },
+    { label: 'Agreement', num: 1, tip: TIP.agree, f: a => f2(a.w) },
+    { label: 'Reviews', num: 1, f: a => int(a.e.n) },
+    { label: 'Mean', num: 1, f: a => f2(a.e.mean) },
+    { label: 'Vs. others', num: 1, tip: TIP.vs, f: a => sgn(a.e.vs) },
+    { label: 'On your shelf', cls: 'nw', f: a => a.pairs.slice().sort((p, q) => q[1] - p[1]).slice(0, 3)
+      .map(([b, u, v]) => `${bookLink(b)} <span class="d">${LABEL[v]}${v === u ? '' : ', you ' + LABEL[u]}</span>`).join(', ') + (a.n > 3 ? ` <span class="d">+${a.n - 3}</span>` : '') },
+  ];
+
+  let picks = [], shown = 0;
+  function below(count) {
+    const { rows, closest, rated } = recommend();
+    if (!count) return $('#below').innerHTML = '';
+    if (!rated) return $('#below').innerHTML = `<h2 class="sec">For you</h2><p class="empty">Rate a few books to see recommendations. Books marked want to read are not used.</p>`;
+    picks = rows.filter(r => r.n >= 3).sort((p, q) => q.score - p.score); shown = 0;
+    $('#below').innerHTML = `<h2 class="sec">For you</h2><div class="meta">${int(picks.length)} books, ranked from ${int(rated)} rated ${rated === 1 ? 'book' : 'books'}</div><div id="picks"></div>`
+      + `<h2 class="sec">Closest critics</h2>`
+      + (closest.length ? `<div class="meta">Critics who reviewed at least two of your rated books and lean the way you do</div>${plain(criticCols, closest)}`
+        : '<p class="empty">No critic shares two of your rated books yet.</p>');
+    morePicks();
+  }
+  function morePicks() {
+    shown = Math.min(shown + PICKS, picks.length);
+    $('#picks').innerHTML = (picks.length ? plain(pickCols, picks.slice(0, shown)) : '<p class="empty">No recommendations yet.</p>')
+      + (shown < picks.length ? `<button type="button" class="tx d more" data-act="picks">${int(Math.min(PICKS, picks.length - shown))} more</button>` : '');
+  }
+  $('#below').addEventListener('click', e => { if (e.target.closest('[data-act=picks]')) morePicks(); });
 
   V.shelf = () => {
     const rows = Object.entries(shelf).filter(([s]) => bySlug[s]).map(([s, x]) => ({ ...bySlug[s], mine: x.v, t: x.t }));
@@ -123,24 +175,16 @@
       !rows.length ? 'Nothing on your shelf yet. Open any book and choose a rating to add it.'
       : S.q ? `No matches on your shelf. <a href="${href('books', '', { q: S.q })}">Search all books</a>`
       : 'No matches' });
+    below(rows.length);
   };
-
-  V.foryou = () => {
-    const { rows, closest, rated } = recommend();
-    head(rated ? `<div class="meta">From ${int(rated)} rated ${rated === 1 ? 'book' : 'books'}${closest.length ? ' · closest critics ' + closest.map(a => who(a.e)).join(', ') : ''}</div>` : '');
-    table([
-      { k: 'title', label: 'Title', f: titleCell },
-      authorCol,
-      { k: 'date', label: 'Date', cls: 'nw', f: dateCell },
-      { k: 'n', label: 'Reviews', num: 1 },
-      { k: 'adj', label: 'Adjusted', num: 1, tip: TIP.adj, f: r => f2(r.adj) },
-      { k: 'score', label: 'Match', num: 1, tip: TIP.match, f: r => f2(r.score) },
-      { k: 'why', label: 'Why', cls: 'nw', v: r => r.why.length, f: why },
-    ], rows, { sort: 'score', noun: 'books', min: 3, empty: () =>
-      !rated ? `Rate a few books to see recommendations. Ratings are set on each book page and collected on your <a href="#/shelf">shelf</a>.`
-      : 'No matches' });
-  };
-  TIP.match = 'How much critics whose ratings track yours liked this book relative to their own average, plus a pull toward its adjusted mean and a small bonus for authors you rated well';
+  V.foryou = () => location.replace('#/shelf'); // the old For you tab now lives beneath the shelf
+  Object.assign(TIP, {
+    match: 'How much critics whose ratings track yours liked this book relative to their own average, plus a pull toward its adjusted mean and a small bonus for authors you rated well',
+    shared: 'Books on your shelf that you rated and this critic reviewed',
+    same: 'Shared books where the critic gave the same rating you did',
+    within: 'Shared books where the critic was at most one step from your rating (rave and positive, say)',
+    agree: 'Sum over shared books of (your rating − 2.5) × (their rating − their own mean), divided by shared books + 3. Higher means they rate above their average the books you like',
+  });
 
   // ---- export and import ----
   function exportShelf() {
