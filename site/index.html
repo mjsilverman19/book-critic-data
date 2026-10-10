@@ -61,6 +61,12 @@ body.book-page { display: grid; grid-template-columns: minmax(0, 680px) 160px; c
 #book-cover { grid-column: 2; grid-row: 2 / 4; align-self: start; position: sticky; top: 32px; }
 #book-cover img { display: block; width: 100%; height: auto; max-height: 250px; object-fit: contain;
   object-position: top center; border-radius: 3px; }
+#book-cover button { display: block; width: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+#book-cover button:focus-visible { outline: 2px solid var(--fg); outline-offset: 5px; }
+html.cover-open { overflow: hidden; }
+#cover-dialog { padding: 0; border: 0; background: transparent; max-width: 100vw; max-height: 100dvh; overflow: auto; outline: none; cursor: zoom-out; }
+#cover-dialog::backdrop { background: #fff; }
+#cover-dialog img { display: block; width: auto; height: auto; max-width: min(80vw, 640px); max-height: 80dvh; margin: auto; }
 @media (max-width: 900px) {
   body.book-page { grid-template-columns: minmax(0, 1fr) 160px; column-gap: 32px; }
 }
@@ -89,6 +95,9 @@ body.book-page { display: grid; grid-template-columns: minmax(0, 680px) 160px; c
 </nav>
 <div id="head"></div>
 <aside id="book-cover" aria-label="Book cover" hidden></aside>
+<dialog id="cover-dialog" aria-label="Larger book cover; click or press Escape to close" tabindex="-1">
+  <img alt="" referrerpolicy="no-referrer">
+</dialog>
 <div id="controls">
   <div class="bar">
     <input id="q" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
@@ -358,6 +367,10 @@ function person(e, kind) {
 
 function head(html) { $('#head').innerHTML = html; }
 
+const coverDialog = $('#cover-dialog');
+coverDialog.addEventListener('click', () => coverDialog.close());
+coverDialog.addEventListener('close', () => document.documentElement.classList.remove('cover-open'));
+
 function showBookCover(book, value) {
   const cover = $('#book-cover');
   let url;
@@ -368,7 +381,18 @@ function showBookCover(book, value) {
   img.referrerPolicy = 'no-referrer';
   img.addEventListener('load', () => {
     if (S.view === 'book' && S.arg === book.slug) {
-      cover.replaceChildren(img);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.setAttribute('aria-label', `Enlarge cover of ${book.title}`);
+      button.append(img);
+      button.addEventListener('click', () => {
+        const enlarged = coverDialog.querySelector('img');
+        enlarged.src = img.src;
+        enlarged.alt = img.alt;
+        coverDialog.showModal();
+        document.documentElement.classList.add('cover-open');
+      });
+      cover.replaceChildren(button);
       cover.hidden = false;
     }
   });
@@ -376,6 +400,7 @@ function showBookCover(book, value) {
 }
 
 function route() {
+  if (coverDialog.open) coverDialog.close();
   const { view, arg, p } = parse();
   S = { view, arg, params: p, q: p.get('q') || '', g: p.get('g') || '', y: p.get('y') || '', a: p.get('a') || '', p: p.get('p') || '' };
   $('#q').value = S.q;
