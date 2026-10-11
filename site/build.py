@@ -208,6 +208,14 @@ def main():
             detail[shard(b["slug"])][b["slug"]].setdefault("cover", "")
         detail[shard(b["slug"])][b["slug"]]["cover"] = b["cover_url"].strip()
 
+    # one category taxonomy for every book (data/backfill/book_genres.csv, built by backfill/genres.py)
+    gpath = DATA / "backfill" / "book_genres.csv"
+    if gpath.exists():
+        cats = {g["slug"]: json.loads(g["genres"]) for g in read("backfill/book_genres.csv")}
+        for row in out_books:
+            if row[0] in cats:
+                row[5] = cats[row[0]]
+
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "reviews").mkdir(exist_ok=True)
     dump = lambda p, x: p.write_text(json.dumps(x, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

@@ -28,6 +28,21 @@ Each book has a page with its publication details, rating counts, description, c
 
 Hovering over a book title anywhere, or focusing it with the keyboard, opens a preview with the cover, synopsis, publication details and review summary. Escape dismisses it. On touch screens the title opens the book page directly.
 
+### Genres
+
+Every book, from either review set, is filed under one taxonomy modeled on bookstore practice (BISAC top levels, trimmed). Categories sit on three facets, and a book can carry one or more from each:
+
+| Facet | Categories |
+|---|---|
+| Form | Fiction, Nonfiction, Poetry, Drama |
+| Fiction genre | Literary Fiction, Historical Fiction, Mystery & Thriller, Science Fiction & Fantasy, Horror, Romance, Short Stories, Graphic Novels & Comics, Children's & Young Adult |
+| Nonfiction subject | Biography & Memoir, History, Politics & Current Affairs, Society & Culture, Science & Nature, Technology, Business & Economics, Health & Psychology, Philosophy & Religion, Arts & Entertainment, Essays & Criticism, True Crime & Investigative, Food & Cooking, Travel, Sports |
+| Attribute | In Translation, LGBTQ+ |
+
+The source's own tags are mapped onto these (Book Marks' "Memoir" and "Biography" both become Biography & Memoir, "Speculative" and "Fantasy" become Science Fiction & Fantasy). Seasonal and promotional tags such as "Hottest Books of the Season", "Best Books" and "Spooktacular Reads" are dropped. Food & Cooking is new: the source had no such category and filed cookbooks under Culture or Memoir, so it is assigned from title words (recipes, cookbook, cooking, kitchen, cuisine) and, for backfill books, from subject tags.
+
+Backfill books had no categories. They get them from the signals available for each: Complete Review's form field (novel, stories, poetry, drama), Guardian section tags, NYT subject terms, Open Library subjects, and title words ("A Memoir", "Poems", "A Novel"). Each subject is scored by how many independent sources support it and a book keeps its strongest three. About 83% of backfill books get at least a form. The assignments are in `data/backfill/book_genres.csv` and built by `backfill/genres.py`; treat backfill categories as best-effort.
+
 Adding `src=bm` to the URL's query restricts every figure to the main review set, and `src=bf` to the backfill.
 
 ### Figures
@@ -166,6 +181,7 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 | `data/backfill/reviews_backfill.csv` | One row per review (93,285 rows) |
 | `data/backfill/books_backfill.csv` | One row per book (52,800 rows), with counts of each rating |
 | `data/backfill/books_enrichment.csv` | Summary, cover, publisher, first publication year, ISBN and subjects for 46,285 backfill books. Summaries come from Open Library (17,881), Hardcover (5,108) or Wikipedia intros (CC BY-SA; `wikipedia_url` links the source); 31,560 books have a cover |
+| `data/backfill/book_genres.csv` | Categories for every book in both review sets (see Genres above), keyed by site slug |
 | `data/backfill/model_metrics.json` | Validation figures for each rating method |
 | `backfill/` | Scripts that fetch, parse, train, enrich and export. `backfill/README.md` lists the order to run them and the API keys they need |
 
