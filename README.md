@@ -166,20 +166,21 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 
 ## Backfill: older reviews
 
-`data/backfill/` extends the data to books reviewed before the main set begins in 2016. It draws on three sources, kept separate from the main tables so the original crawl stays untouched. Every rating states how it was produced.
+`data/backfill/` extends the data to books reviewed before the main set begins in 2016. It draws on several sources, kept separate from the main tables so the original crawl stays untouched. Every rating states how it was produced.
 
 | Source | What it gives | Rating |
 |---|---|---|
 | [The Complete Review](https://www.complete-review.com) | Per-critic review summaries, mostly international fiction, with outlet, critic, date and a quote (26,074 rows) | Michael Orthofer's letter grade for the review where he gives one; otherwise predicted from the quote |
 | Guardian Open Platform | Every review in the Guardian and Observer books section, 1999 onward (35,548 rows) | Predicted from the full text |
 | NYT Archive API | Daily and Sunday Book Review reviews of single books, 1990 onward (31,663 rows) | None (see below) |
+| TLS (the-tls.com public API) | Times Literary Supplement reviews, 2015 onward, matched to books by the titles they italicize and the reviewer's slug (18,570 rows from 12,128 reviews; a review of several books gives a row per book) | Predicted from the full text by the Guardian-trained model (0.57 correlation with Book Marks labels on 363 TLS reviews) |
 
 ### Files
 
 | File | Contents |
 |---|---|
-| `data/backfill/reviews_backfill.csv` | One row per review (93,285 rows) |
-| `data/backfill/books_backfill.csv` | One row per book (52,800 rows), with counts of each rating |
+| `data/backfill/reviews/<source>.csv` | One row per review, one file per source so each stays under GitHub's file size limits (111,855 rows in all) |
+| `data/backfill/books_backfill.csv` | One row per book (56,458 rows), with counts of each rating |
 | `data/backfill/books_enrichment.csv` | Summary, cover, publisher, first publication year, ISBN and subjects for 46,285 backfill books. Summaries come from Open Library (17,881), Hardcover (5,108) or Wikipedia intros (CC BY-SA; `wikipedia_url` links the source); 31,560 books have a cover |
 | `data/backfill/book_genres.csv` | Categories for every book in both review sets (see Genres above), keyed by site slug |
 | `data/backfill/model_metrics.json` | Validation figures for each rating method |
@@ -187,11 +188,11 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 
 ### Columns
 
-`reviews_backfill.csv` follows the main reviews schema where it can and adds:
+The review files follow the main reviews schema where it can and adds:
 
 | Column | Notes |
 |---|---|
-| `source` | `complete_review`, `guardian_api` or `nyt_api` |
+| `source` | `complete_review`, `guardian_api`, `nyt_api`, `tls` |
 | `book_key` | Normalized title plus author surname, used to group reviews of one book across sources |
 | `bookmarks_slug` | The matching book in the main set, when there is one |
 | `title`, `author`, `book_year` | The book reviewed, as parsed from the source |

@@ -1,3 +1,4 @@
+import html as _h
 import json,glob,re,numpy as np,pandas as pd,joblib,unicodedata
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import Ridge
@@ -7,24 +8,44 @@ exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('o
 rows=[]
 for f in sorted(glob.glob('nyt/*.json')):
     for x in json.load(open(f)):
-        cw=[re.sub(r'\s*\(book\)\s*$','',k['value'],flags=re.I).strip() for k in (x.get('keywords') or []) if k['name']=='creative_works' and '(book)' in k['value'].lower()]
+        kws=x.get('keywords') or []
+        isbr=any(str(k.get('value','')).upper()=='BOOK REVIEWS' for k in kws)
+        cw=[re.sub(r'\s*\(book\)\s*$','',k['value'],flags=re.I).strip() for k in kws if k['name']=='creative_works' and ('(book)' in k['value'].lower() or isbr)]
         cw=sorted(set(cw),key=len)
         base=[c for c in cw if not any(c!=d and d.lower().startswith(c.lower()) for d in cw)] or cw
         titles={c.split(':')[0].strip().lower() for c in cw}
-        if len(titles)!=1: continue
+        ab0=(x.get('abstract') or x.get('lead_paragraph') or '').strip()
+        mm=re.match(r"^\s*([A-Z0-9][A-Z0-9 ,'’:;!?&\-\.]{2,140}?)\.?\s+(?:Edited |Translated )?[Bb]y ([A-Z][^.(\d]{2,60}?)[.,]?\s+(?:\(|\d+\s*pp|Illustrated|Translated|Edited|With)",ab0)
+        old_t=old_a=None
+        if len(titles)!=1 and not mm:
+            for pat,ti,ai in [(r"^([A-Z][\w.' -]+?, [A-Z][\w.' -]+?): (.+?) revd\b",2,1),(r"^(.+?) \(Book\): Book .+?, by ([^,;]+?)(?:,|;| revd)",1,2),
+                              (r"^(.+?)'s book '([^']+)'",2,1),
+                              (r"[Rr]ev of (?:[A-Z][\w.' -]+? )?book (.+?), by ([^,;(]+)",1,2),
+                              (r"\bbook (.+?), by ([^,;(]+?),? revd",1,2),
+                              (r"^([A-Z][\w.' -]+?) book (.+?),? revd",2,1)]:
+                mo=re.search(pat,ab0)
+                if mo: old_t,old_a=mo.group(ti).strip(" '.,"),mo.group(ai).strip(" '.,"); break
+        if len(titles)!=1:
+            if mm: cw=[mm.group(1).strip(' .')]
+            elif old_t and len(old_t)<160: cw=[old_t]
+            else: continue
         t=max(cw,key=len)
-        if t.isupper(): t=t.title()
+        if t.isupper(): t=re.sub(r"(\w)'(\w)",lambda m:m.group(1)+"'"+m.group(2).lower(),t.title())
         t=re.sub(r'^(.*), (The|A|An)(:|$)',r'\2 \1\3',t)
         ab=x.get('abstract') or ''; lp=x.get('lead_paragraph') or ''
-        a=None
-        m=re.search(r'By ([A-Z][^\d]{2,60}?)\s*\d+\s*pp',lp) or re.search(r'reviews? (?:book|novel|collection|memoir)?.*? by ([A-Z][\w.\' -]+?)(?:;|\(|,|$)',ab)
-        if m: a=m.group(1).strip()
+        if old_a and ',' in old_a: old_a=' '.join(reversed([p.strip() for p in old_a.split(',',1)]))
+        a=mm.group(2).strip() if mm else (old_a.title() if old_a and old_a.isupper() else old_a)
+        m=None if a else re.search(r'By ([A-Z][^\d]{2,60}?)\s*\d+\s*pp',lp) or re.search(r'reviews? (?:book|novel|collection|memoir)?.*? by ([A-Z][\w.\' -]+?)(?:;|\(|,|$)',ab)
+        if a: pass
+        elif m: a=m.group(1).strip()
         else:
             ps=[k['value'] for k in (x.get('keywords') or []) if k['name']=='persons']
             if ps:
                 p=ps[0].split(', '); a=(' '.join(p[1:]+p[:1])).title()
-        rev=x.get('byline',{}).get('original') or ''
-        rows.append(dict(title=t,author=a,review_date=x['pub_date'][:10],critic=re.sub(r'^By ','',rev),headline=x['headline']['main'],
+        rev=(x.get('byline') or {}).get('original') or ''
+        mr=re.search(r'revd by ([A-Z][\w.\' -]+?)(?:;|,|\(|$)',ab0)
+        if not rev and mr: rev=mr.group(1)
+        rows.append(dict(title=t,author=a,review_date=x['pub_date'][:10],critic=_h.unescape(re.sub(r'^By ','',rev)),headline=x['headline']['main'],
             abstract=ab,lead=lp,review_url=x.get('web_url'),desk=x.get('news_desk')))
 N=pd.DataFrame(rows).drop_duplicates('review_url')
 N['outlet']=np.where(N.desk.str.contains('Book Review',na=False),'The New York Times Book Review','The New York Times')

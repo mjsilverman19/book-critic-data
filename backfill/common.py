@@ -15,7 +15,7 @@ def no(s):
     s=asc(s); s=re.sub(r'\(.*?\)','',s); s=s.replace('book rev.','book review').replace('ny times','new york times').replace('wall st.','wall street').replace('la times','los angeles times').replace('the ','')
     return re.sub(r'[^a-z]','',s)
 def okey(o):
-    k=no(o); return {'guardianweekly':'guardian','observerreview':'observer'}.get(k,k)
+    k=no(o); return {'guardianweekly':'guardian','observerreview':'observer','tls':'timesliterarysupplement','independentonsunday':'independent','nytimes':'newyorktimes','nytimesbookreview':'newyorktimesbookreview','newyorktimessundaybookreview':'newyorktimesbookreview'}.get(k,k)
 norm_url=lambda u: re.sub(r'^https?://(www\.)?','',str(u)).split('?')[0].split('#')[0].rstrip('/') if isinstance(u,str) else None
 bm['bk']=bm.title.map(nt)+'|'+bm.author.map(na); bm['ok']=bm.outlet.map(okey); bm['uk']=bm.review_url.map(norm_url)
 bmb['bk']=bmb.title.map(nt)+'|'+bmb.author.map(na)

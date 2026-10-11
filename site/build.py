@@ -74,11 +74,11 @@ def main():
     # src codes: 0 Book Marks, 1 Complete Review grade, 2 model-predicted
     for r in rows:
         r["src"], r["date"] = 0, ""
-    bf_path = DATA / "backfill" / "reviews_backfill.csv"
+    bf_files = sorted((DATA / "backfill" / "reviews").glob("*.csv"))
     bf_books = {}
-    if bf_path.exists():
+    if bf_files:
         bm_slugs = {b["slug"] for b in books}
-        for r in read("backfill/reviews_backfill.csv"):
+        for r in (row for f in bf_files for row in read(f"backfill/reviews/{f.name}")):
             # unrated reviews (NYT, non-English quotes) are kept with rating 0: listed on book pages, left out of the averages
             if not r["book_key"] or r["in_bookmarks"] == "True" or r["also_in_complete_review"] == "True":
                 continue

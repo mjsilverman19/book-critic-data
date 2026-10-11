@@ -23,7 +23,8 @@ cols=['source','book_key','bookmarks_slug','title','author','book_year','outlet'
       'native_grade','predicted_value','pull_quote','review_url','source_url','in_bookmarks','also_in_complete_review','original_language','genre','headline']
 A=A[cols].sort_values(['source','review_date'])
 os.makedirs('out/backfill',exist_ok=True)
-A.to_csv('out/backfill/reviews_backfill.csv',index=False)
+os.makedirs('out/backfill/reviews',exist_ok=True)
+for src,part in A.groupby('source'): part.to_csv(f'out/backfill/reviews/{src}.csv',index=False)
 # books
 B=A.dropna(subset=['book_key']).copy(); B['labeled']=B.rating_method.eq('cr_grade')
 g=B.groupby('book_key')
