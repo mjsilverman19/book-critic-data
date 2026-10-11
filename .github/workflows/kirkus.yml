@@ -1,0 +1,43 @@
+name: Crawl Kirkus
+
+# Walks Kirkus review pages at the 10-second delay its robots.txt asks for, about 2,000 pages a run,
+# and commits the parsed rows to data/backfill/kirkus/. Each run resumes from the saved frontier.
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Minutes to crawl"
+        default: "330"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kirkus
+  cancel-in-progress: false
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Crawl
+        run: python3 backfill/kirkus_crawl.py --minutes "${{ inputs.minutes || '330' }}"
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/backfill/kirkus
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git commit -m "Kirkus crawl $(date -u +%F-%H%M)"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -X theirs origin main && git push && exit 0
+            sleep $((i * 20))
+          done
+          exit 1
