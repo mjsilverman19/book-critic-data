@@ -2,9 +2,10 @@ name: Crawl Kirkus
 
 # Walks Kirkus review pages at the 10-second delay its robots.txt asks for, about 2,000 pages a run,
 # and commits the parsed rows to data/backfill/kirkus/. Each run resumes from the saved frontier.
+# The hourly schedule keeps one run going: a new run waits in the concurrency queue until the last ends.
 on:
   schedule:
-    - cron: "41 */6 * * *"
+    - cron: "41 * * * *"
   workflow_dispatch:
     inputs:
       minutes:
