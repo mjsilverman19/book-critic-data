@@ -14,8 +14,23 @@ exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'lang.py')).re
 # the quote model is English-only: leave non-English Complete Review quotes unrated
 ne=(A.rating_method=='model_quote')&~A.pull_quote.map(is_english)
 A.loc[ne,['rating_value','predicted_value']]=np.nan; A.loc[ne,'rating_method']='unrated_non_english'
+# full-text sources rated by the Guardian-trained model (TLS, Literary Review, Independent, ...)
+import glob as _g
+for p in sorted(_g.glob('extra_*.parquet')):
+    X=pd.read_parquet(p)
+    X=pd.DataFrame(dict(source=X.source,book_key=X.book_key,title=X.title,author=X.author,book_year=X['book_year'] if 'book_year' in X else None,outlet=X.outlet,critic=X.critic,
+        review_date=X.review_date,native_grade=X.get('native_grade'),rating_value=X.rv,predicted_value=X.pred,rating_method=X.get('rating_method','model_fulltext'),
+        pull_quote=X.standfirst,review_url=X.review_url,source_url=X.review_url,original_language=None,genre=None,headline=X.get('headline')))
+    X['outlet_key']=X.outlet.map(okey)
+    bmset=set(zip(bm.bk,bm.ok)); bmurl=set(bm.uk.dropna())
+    X['in_bookmarks']=[(b,o) in bmset or (norm_url(u) in bmurl) for b,o,u in zip(X.book_key,X.outlet_key,X.review_url)]
+    X['bookmarks_slug']=X.book_key.map(slug_of)
+    crk=set(zip(A[A.source=='complete_review'].book_key,A[A.source=='complete_review'].outlet_key))
+    X['also_in_complete_review']=[(b,o) in crk for b,o in zip(X.book_key,X.outlet_key)]
+    A=pd.concat([A,X],ignore_index=True)
+    print('added',p,len(X))
 A['rating_value']=A.rating_value.astype('Int64'); A['rating_label']=A.rating_value.map(LAB)
-A['predicted_value']=A.predicted_value.round(3)
+A['predicted_value']=pd.to_numeric(A.predicted_value,errors='coerce').round(3)
 A.loc[A.critic.astype(str).str.strip().isin(['.','-','n.a.','']),'critic']=None
 A.loc[A.book_key.fillna('').str.startswith('|'),'book_key']=None
 A['review_year']=A.review_date.astype(str).str[:4]
@@ -23,8 +38,10 @@ cols=['source','book_key','bookmarks_slug','title','author','book_year','outlet'
       'native_grade','predicted_value','pull_quote','review_url','source_url','in_bookmarks','also_in_complete_review','original_language','genre','headline']
 A=A[cols].sort_values(['source','review_date'])
 os.makedirs('out/backfill',exist_ok=True)
+# one file per source keeps each under GitHub's size limits
 os.makedirs('out/backfill/reviews',exist_ok=True)
-for src,part in A.groupby('source'): part.to_csv(f'out/backfill/reviews/{src}.csv',index=False)
+for src,part in A.groupby('source'):
+    part.to_csv(f'out/backfill/reviews/{src}.csv',index=False)
 # books
 B=A.dropna(subset=['book_key']).copy(); B['labeled']=B.rating_method.eq('cr_grade')
 g=B.groupby('book_key')

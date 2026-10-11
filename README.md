@@ -172,15 +172,19 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 |---|---|---|
 | [The Complete Review](https://www.complete-review.com) | Per-critic review summaries, mostly international fiction, with outlet, critic, date and a quote (26,074 rows) | Michael Orthofer's letter grade for the review where he gives one; otherwise predicted from the quote |
 | Guardian Open Platform | Every review in the Guardian and Observer books section, 1999 onward (35,548 rows) | Predicted from the full text |
-| NYT Archive API | Daily and Sunday Book Review reviews of single books, 1990 onward (31,663 rows) | None (see below) |
+| NYT Archive API | Daily and Sunday Book Review reviews of single books, 1960 to 1979 and 1981 onward (62,416 rows). 1980 is missing because that year's archive records carry no book metadata | None (see below) |
+| The Independent | Book reviews from the paper's daily sitemaps, mostly 2006 to 2016 (10,433 rows) | Predicted from the full text; the two reviews with printed stars use them |
+| Literary Review (public WordPress API) | Reviews from 2015 on, with the book and its author from each review page (7,554 rows) | Predicted from the full text (0.61 correlation on 63 labeled reviews) |
+| The Arts Desk | Star-rated book reviews (480 rows) | The site's own five-star rating: 4 or 5 stars rave, 3 positive, 2 mixed, 1 pan |
+| Kirkus Reviews | A crawl that walks Kirkus review pages at the site's requested 10-second delay, run every six hours by `.github/workflows/kirkus.yml`; it adds about 8,000 pages a day | Starred reviews are raves; others are rated from the review's closing sentence by the quote model |
 | TLS (the-tls.com public API) | Times Literary Supplement reviews, 2015 onward, matched to books by the titles they italicize and the reviewer's slug (18,570 rows from 12,128 reviews; a review of several books gives a row per book) | Predicted from the full text by the Guardian-trained model (0.57 correlation with Book Marks labels on 363 TLS reviews) |
 
 ### Files
 
 | File | Contents |
 |---|---|
-| `data/backfill/reviews/<source>.csv` | One row per review, one file per source so each stays under GitHub's file size limits (111,855 rows in all) |
-| `data/backfill/books_backfill.csv` | One row per book (56,458 rows), with counts of each rating |
+| `data/backfill/reviews/<source>.csv` | One row per review, one file per source so each stays under GitHub's file size limits (161,086 rows in all) |
+| `data/backfill/books_backfill.csv` | One row per book (92,075 rows), with counts of each rating |
 | `data/backfill/books_enrichment.csv` | Summary, cover, publisher, first publication year, ISBN and subjects for 46,285 backfill books. Summaries come from Open Library (17,881), Hardcover (5,108) or Wikipedia intros (CC BY-SA; `wikipedia_url` links the source); 31,560 books have a cover |
 | `data/backfill/book_genres.csv` | Categories for every book in both review sets (see Genres above), keyed by site slug |
 | `data/backfill/model_metrics.json` | Validation figures for each rating method |
@@ -192,12 +196,12 @@ The review files follow the main reviews schema where it can and adds:
 
 | Column | Notes |
 |---|---|
-| `source` | `complete_review`, `guardian_api`, `nyt_api`, `tls` |
+| `source` | `complete_review`, `guardian_api`, `nyt_api`, `tls`, `independent`, `literary_review`, `arts_desk`, `kirkus` |
 | `book_key` | Normalized title plus author surname, used to group reviews of one book across sources |
 | `bookmarks_slug` | The matching book in the main set, when there is one |
 | `title`, `author`, `book_year` | The book reviewed, as parsed from the source |
 | `review_date` | Publication date of the review |
-| `rating_method` | `cr_grade` (Complete Review grade, mapped), `model_quote`, `model_fulltext`, `unrated_weak_model` (NYT), `unrated_non_english` (a German, French or other non-English quote, which the English-trained model does not score), or blank for 5,226 Complete Review entries with neither a grade nor a quote |
+| `rating_method` | `cr_grade` (Complete Review grade, mapped), `model_quote`, `model_fulltext`, `stars` (a printed star rating), `kirkus_star`, `unrated_weak_model` (NYT), `unrated_non_english` (a German, French or other non-English quote, which the English-trained model does not score), or blank for 5,226 Complete Review entries with neither a grade nor a quote |
 | `native_grade` | Complete Review letter grade, or a Guardian star rating where the Guardian printed one |
 | `predicted_value` | Model score on the 1 to 4 scale, before bucketing into a label |
 | `in_bookmarks` | The same review (same book and outlet, or same URL) is already in the main tables (11,749 rows) |
