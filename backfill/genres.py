@@ -76,7 +76,7 @@ for b in books.itertuples():
     out[b.slug]=finish(cats,hint)
 
 # ---- backfill books: gather signals by book_key ----
-sig=collections.defaultdict(list); form=collections.defaultdict(collections.Counter)
+sig=collections.defaultdict(list); form=collections.defaultdict(collections.Counter); LRS={}
 cb=pd.read_csv('cr_books.csv'); exec(open('common.py').read().split("R='")[0])  # pandas etc
 import unicodedata
 def asc(s): return unicodedata.normalize('NFKD',str(s)).encode('ascii','ignore').decode().lower()
@@ -119,6 +119,40 @@ for l in open('ol_enrich.jsonl'):
     sig[d['book_key']].append(' '.join(s))
     if any(x.startswith('fiction') or x.endswith(', fiction') or x=='fiction' for x in s): form[d['book_key']]['Fiction']+=2
     elif any(x in ('nonfiction','biography','history') for x in s): form[d['book_key']]['Nonfiction']+=1
+# section paths and fields from the newer sources (TLS url sections, Literary Review sections, Kirkus genre)
+import glob as _g
+for p in _g.glob('extra_*.parquet'):
+    X=pd.read_parquet(p)
+    for k,u in zip(X.book_key,X.review_url):
+        if not isinstance(u,str): continue
+        path=' '.join(re.sub(r'https?://[^/]+/','',u).split('/')[:-1]).replace('-',' ')
+        if path: sig[k].append(path)
+        if 'the-tls.com' in u:
+            if re.search(r'/(fiction|literature/(?:contemporary|modern|classics)|poetry)',u): form[k]['Fiction' if 'poetry' not in u else 'Poetry']+=1
+            elif re.search(r'/(history|politics|science|philosophy|religion|arts|culture|economics|society|biography|memoir|world)',u): form[k]['Nonfiction']+=1
+for l in open('lr/p001.json') if False else []: pass
+for f in _g.glob('lr/p*.json'):
+    for d in json.load(open(f)):
+        secs=[c[20:].replace('-',' ') for c in (d.get('class_list') or []) if c.startswith('content_section_tx-')]
+        au=[c[10:] for c in (d.get('class_list') or []) if c.startswith('author_tx-')]
+        if secs: LRS[d['link']]=' '.join(secs)
+LRX=pd.read_parquet('extra_literary_review.parquet') if os.path.exists('extra_literary_review.parquet') else None
+if LRX is not None:
+    for k,u in zip(LRX.book_key,LRX.review_url):
+        s_=LRS.get(u)
+        if s_:
+            sig[k].append(s_)
+            if re.search(r'fiction|poetry',s_): form[k]['Poetry' if 'poetry' in s_ else 'Fiction']+=2
+            else: form[k]['Nonfiction']+=1
+KX=pd.read_parquet('extra_kirkus.parquet') if os.path.exists('extra_kirkus.parquet') else None
+kg=pd.read_csv(f'{ROOT}/data/backfill/kirkus/reviews.csv.gz') if os.path.exists(f'{ROOT}/data/backfill/kirkus/reviews.csv.gz') else None
+if KX is not None and kg is not None:
+    g2=dict(zip(kg.url,kg.genre.fillna('')))
+    for k,u in zip(KX.book_key,KX.review_url):
+        g=g2.get(u,'').lower()
+        if 'nonfiction' in g: form[k]['Nonfiction']+=3
+        elif 'fiction' in g: form[k]['Fiction']+=3
+        if g: sig[k].append(g)
 bf=pd.read_csv('out/backfill/books_backfill.csv'); bf=bf[bf.bookmarks_slug.isna()&bf.book_key.notna()]
 for r in bf.itertuples():
     cats=apply_rules(sig.get(r.book_key,[]))
@@ -136,6 +170,33 @@ for r in bf.itertuples():
     elif hint in ('Nonfiction',None): cats-= {'Literary Fiction','Mystery & Thriller','Science Fiction & Fantasy','Horror','Romance','Short Stories','Historical Fiction'} if hint=='Nonfiction' else set()
     if hint in ('Fiction','Poetry','Drama'): cats.discard('Food & Cooking')
     out['bf-'+re.sub(r'[^a-z0-9]+','-',r.book_key.lower()).strip('-')]=finish(cats,hint)
+# books still without a form: classify Fiction / Nonfiction / Poetry from their review snippets and title,
+# trained on books whose form is known; only confident predictions are kept
+try:
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.linear_model import LogisticRegression
+    import glob as _g2
+    R=pd.concat([pd.read_csv(f,usecols=['book_key','title','pull_quote','headline'],low_memory=False) for f in _g2.glob('out/backfill/reviews/*.csv')])
+    R=R.dropna(subset=['book_key'])
+    snip=R.assign(t=R.title.fillna('')+' . '+R.headline.fillna('')+' . '+R.pull_quote.fillna('')).groupby('book_key').t.apply(lambda x:' '.join(x)[:3000])
+    slug2key={'bf-'+re.sub(r'[^a-z0-9]+','-',k.lower()).strip('-'):k for k in snip.index}
+    lab={k:v for k,v in out.items() if k.startswith('bf-') and k in slug2key}
+    y=[]; X=[]; U=[]
+    for sl,v in lab.items():
+        f=[x for x in v if x in ('Fiction','Nonfiction','Poetry')]
+        if f: X.append(snip[slug2key[sl]]); y.append(f[0])
+        elif not v or not set(v)&{'Fiction','Nonfiction','Poetry','Drama'}: U.append(sl)
+    tv=TfidfVectorizer(ngram_range=(1,2),min_df=3,sublinear_tf=True,max_features=200000); Xm=tv.fit_transform(X)
+    clf=LogisticRegression(C=4,max_iter=2000).fit(Xm,y)
+    if U:
+        P=clf.predict_proba(tv.transform([snip[slug2key[s_]] for s_ in U]))
+        added=0
+        for s_,p in zip(U,P):
+            j=p.argmax()
+            if p[j]>=0.8:
+                out[s_]=finish(set(out[s_])|{clf.classes_[j]},clf.classes_[j]); added+=1
+        print('form from snippets:',added,'of',len(U))
+except Exception as e: print('snippet classifier skipped:',e)
 rows=[dict(slug=k,genres=json.dumps(v)) for k,v in out.items()]
 pd.DataFrame(rows).to_csv('out/backfill/book_genres.csv',index=False)
 c=collections.Counter(x for v in out.values() for x in v)
