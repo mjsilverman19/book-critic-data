@@ -132,6 +132,13 @@ const int = x => x.toLocaleString('en-US');
 const enc = encodeURIComponent;
 const fold = s => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[.'\u2019]/g, '');
 
+// genre menu groups, matching the taxonomy in backfill/genres.py
+const GENRE_GROUPS = [
+  ['Form', ['Fiction', 'Nonfiction', 'Poetry', 'Drama']],
+  ['Fiction', ['Literary Fiction', 'Historical Fiction', 'Mystery & Thriller', 'Science Fiction & Fantasy', 'Horror', 'Romance', 'Short Stories', 'Graphic Novels & Comics', "Children's & Young Adult"]],
+  ['Nonfiction', ['Biography & Memoir', 'History', 'Politics & Current Affairs', 'Society & Culture', 'Science & Nature', 'Technology', 'Business & Economics', 'Health & Psychology', 'Philosophy & Religion', 'Arts & Entertainment', 'Essays & Criticism', 'True Crime & Investigative', 'Food & Cooking', 'Travel', 'Sports']],
+  ['Attributes', ['In Translation', 'LGBTQ+']],
+];
 const TIP = {
   adj: 'Mean pulled toward the overall mean (3.27) as if the book had 10 extra average reviews, so books with few reviews do not dominate',
   vs: 'Average gap between this rating and the mean of the other reviews of the same book (books with 4+ reviews; shown at 20+)',
@@ -204,7 +211,13 @@ async function load() {
   RA = idx.reviews.map(([b, v, c, o, src]) => ({ b: B[b], v, ci: c, oi: o, src: src || 0 }));
   aggregate(new URLSearchParams(location.hash.split('?')[1] || '').get('src') || '');
   const gc = {}; B.forEach(b => b.genres.forEach(g => gc[g] = (gc[g] || 0) + 1));
-  $('#g').insertAdjacentHTML('beforeend', Object.keys(gc).sort().map(g => `<option value="${esc(g)}">${esc(g)} (${int(gc[g])})</option>`).join(''));
+  const opt = g => `<option value="${esc(g)}">${esc(g)} (${int(gc[g])})</option>`;
+  const grouped = new Set(GENRE_GROUPS.flatMap(([, gs]) => gs));
+  const other = Object.keys(gc).filter(g => !grouped.has(g)).sort();
+  $('#g').insertAdjacentHTML('beforeend', [...GENRE_GROUPS, ['Other', other]].map(([label, gs]) => {
+    const present = gs.filter(g => gc[g]);
+    return present.length ? `<optgroup label="${esc(label)}">${present.map(opt).join('')}</optgroup>` : '';
+  }).join(''));
   const pc = {}; B.forEach(b => b.pub && (pc[b.pub] = (pc[b.pub] || 0) + 1));
   const sortName = s => s.replace(/^the\s+/i, '');
   $('#p').insertAdjacentHTML('beforeend', Object.keys(pc).filter(p => pc[p] >= 5).sort((a, b) => sortName(a).localeCompare(sortName(b)))

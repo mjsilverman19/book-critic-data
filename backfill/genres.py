@@ -71,7 +71,7 @@ for b in books.itertuples():
     try: tags=json.loads(b.genres) if isinstance(b.genres,str) else []
     except Exception: tags=[]
     cats={c for t in tags for c in BM.get(t,[])}
-    if re.search(TITLE_FOOD,str(b.title).lower()): cats.add('Food & Cooking')
+    if re.search(TITLE_FOOD,str(b.title).lower()) and not cats & {'Fiction','Poetry'}: cats.add('Food & Cooking')
     hint='Fiction' if 'Fiction' in cats else 'Nonfiction' if 'Nonfiction' in cats else 'Poetry' if 'Poetry' in cats else None
     out[b.slug]=finish(cats,hint)
 
@@ -134,6 +134,7 @@ for r in bf.itertuples():
     fic=hint=='Fiction'
     if fic: cats-= {'History','Politics & Current Affairs','Society & Culture','Science & Nature','Business & Economics','Health & Psychology','Philosophy & Religion','Travel','Sports','Technology','Food & Cooking','True Crime & Investigative','Essays & Criticism','Arts & Entertainment','Biography & Memoir'}
     elif hint in ('Nonfiction',None): cats-= {'Literary Fiction','Mystery & Thriller','Science Fiction & Fantasy','Horror','Romance','Short Stories','Historical Fiction'} if hint=='Nonfiction' else set()
+    if hint in ('Fiction','Poetry','Drama'): cats.discard('Food & Cooking')
     out['bf-'+re.sub(r'[^a-z0-9]+','-',r.book_key.lower()).strip('-')]=finish(cats,hint)
 rows=[dict(slug=k,genres=json.dumps(v)) for k,v in out.items()]
 pd.DataFrame(rows).to_csv('out/backfill/book_genres.csv',index=False)
