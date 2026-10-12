@@ -123,6 +123,7 @@ def main():
 
     for r in rows:
         r["critic"] = re.sub(r"\\+", "", r["critic"]).replace("\u00ad", "").strip().strip('"\u201c\u201d').strip()
+        r["critic"] = re.sub(r"^(?:by|reviewed by|reviews by)\s+", "", r["critic"], flags=re.I)
         r["pull_quote"] = re.sub(r"\\+(['\"])", r"\1", r["pull_quote"])
 
     # merge critic spellings that share a slug or differ only in case

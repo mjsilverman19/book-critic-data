@@ -1,4 +1,4 @@
-import json,re,joblib,numpy as np,pandas as pd,html
+import json,re,os,joblib,numpy as np,pandas as pd,html
 exec(open(__import__('os').path.join(__import__('os').path.dirname(__import__('os').path.abspath(__file__)),'catalog.py')).read())
 L={}
 for l in open('ind_reviews.jsonl'):
@@ -11,8 +11,13 @@ def parse_head(h):
     m=re.match(r"^(.+?),?\s+(?:[Ee]dited )?[Bb]y\s+([A-Z][^,:;|.]{2,60}?)\s*(?:[,:;|(.]|$)",h)
     if m: return m.group(1).strip(' "\'‘’“”'),m.group(2).strip()
     return None,None
+FIX={}
+if os.path.exists('ind_critic_fix.jsonl'):
+    for l in open('ind_critic_fix.jsonl'):
+        x=json.loads(l); FIX[x['url']]=x['critic']
 rows=[]
 for u,d in L.items():
+    if (d.get('critic') or '').lower().startswith('review'): d['critic']=FIX.get(u)
     t,a=parse_head(d['headline'])
     if not t or len(t)>150: continue
     text=d['text']

@@ -1646,7 +1646,7 @@ alaska|michener,Alaska,James A Michener,,1988-06-23,,2,0,,0,0,0,0,nyt_api
 alastaircampbelldiariesvolume1|campbell,"The Alastair Campbell Diaries, Volume 1: Prelude to Power",Alastair Campbell,,2010-06-17,,1,1,2.0,0,0,1,0,independent
 alastaircampbelldiariesvolumetwo|campbell,"The Alastair Campbell Diaries, Volume Two: Power and the People 1997-99",Alastair Campbell,,2011-01-22,,2,2,2.0,0,1,0,1,guardian_api;independent
 alastaircampbell|oborne,Alastair Campbell,Peter Oborne,,2004-06-25,,2,2,1.5,0,0,1,1,guardian_api
-albanberg|monson,Alban Berg,Karen Monson,,1979-08-16,,1,0,,0,0,0,0,nyt_api
+albanberg|monson,Alban Berg,Karen Monson,,1979-08-16,,2,0,,0,0,0,0,nyt_api
 albaniaandthesinosovietrift|griffith,Albania and The Sino-Soviet Rift,W E Griffith,,1963-07-28,,1,0,,0,0,0,0,nyt_api
 albaniadefiant|myrdal,Albania Defiant,Jan Myrdal,,1976-11-14,,1,0,,0,0,0,0,nyt_api
 albanianaffairs|fortes,The Albanian Affairs,Susana Fortes,2003,2003-12-04,,1,0,,0,0,0,0,complete_review
@@ -2633,6 +2633,7 @@ americanconnection|illustrated,The American Connection,Jack Holland. Illustrated
 americanconservatism|bacevich,American Conservatism,Andrew J. Bacevich,2020,2020-02-01,american-conservatism-reclaiming-an-intellectual-tradition,2,1,2.0,0,0,1,0,kirkus;nyt_api
 americancontagions|witt,American Contagions,John Fabian Witt,2020,2020-09-01,american-contagions-epidemics-and-the-law-from-smallpox-to-covid-19,2,1,4.0,1,0,0,0,kirkus;nyt_api
 americancontemporary|zahn,American Contemporary - And Other Stories,C Zahn,,1963-11-24,,1,0,,0,0,0,0,nyt_api
+americancorporationitspoweritsmoneyitspolitics|barber,"The American Corporation. Its Power, Its Money, Its Politics",Richard J Barber,,1970-03-08,,1,0,,0,0,0,0,nyt_api
 americancouples|blumstein,American Couples,Philip Blumstein,,1983-10-23,,1,0,,0,0,0,0,nyt_api
 americancrisis|atlantic,The American Crisis,Writers of the Atlantic,2020,2020-08-01,the-american-crisis-what-went-wrong-how-we-recover,1,1,4.0,1,0,0,0,kirkus
 americancrucible|blackburn,The American Crucible,Robin Blackburn,,2011-06-23,,2,2,3.0,0,2,0,0,guardian_api;independent
@@ -2936,6 +2937,7 @@ americansympathy|crain,American Sympathy,Caleb Crain,,2001-06-03,,1,0,,0,0,0,0,n
 americans|boorstin,The Americans: The National Experience,D Boorstin,,1965-10-31,,2,0,,0,0,0,0,nyt_api
 americans|cooke,The Americans: Fifty Talks On Our Life And Times,Alistair Cooke,,1979-11-14,,1,0,,0,0,0,0,nyt_api
 americans|countryman,Americans: A Collision Of Histories (Book)Country:  United States,Edward Countryman.,,1996-06-30,,1,0,,0,0,0,0,nyt_api
+americans|frost,The Americans,David Frost,,1970-11-29,,1,0,,0,0,0,0,nyt_api
 americantabloid|ellroy,American Tabloid,James Ellroy,1995,1995,,14,9,2.667,2,4,1,2,complete_review
 americantaboo|weiss,American Taboo: A Murder In The Peace Corps,Philip Weiss,,2004-06-21,,2,0,,0,0,0,0,nyt_api
 americantakeoverofbritain|servanschreiber,The American Take-Over Of Britain,J J The American Challenge Servan-Schreiber,,1968-07-16,,1,0,,0,0,0,0,nyt_api
@@ -5523,7 +5525,6 @@ baby|jochems,Baby,Annaleese Jochems,,2019-08-15,baby,1,1,3.0,0,1,0,0,guardian_ap
 baby|maclachlan,Baby,Patricia MacLachlan,,1993-11-14,,1,0,,0,0,0,0,nyt_api
 bacacay|gombrowicz,Bacacay,Witold Gombrowicz,1957,2004-10-24,,4,3,3.0,0,3,0,0,complete_review
 bacardiandthelongfightforcuba|gjelten,Bacardi and the Long Fight for Cuba,Tom Gjelten,,2009-12-18,,1,1,4.0,1,0,0,0,independent
-baccarat|stewart,Baccarat,Martha Stewart,,1992-12-27,,1,0,,0,0,0,0,nyt_api
 bachanalia|altschuler,Bachanalia,Eric Lewis Altschuler,,1994-03-22,,1,0,,0,0,0,0,nyt_api
 bachelorbess|gerber,Bachelor Bess,Philip L Gerber,,1990-12-09,,1,0,,0,0,0,0,nyt_api
 bachelorsbride|koch,The Bachelor's Bride,Stephen Koch,,1986-11-23,,1,0,,0,0,0,0,nyt_api
@@ -8048,7 +8049,6 @@ bittertasteofglory|valenti,The Bitter Taste Of Glory,Jack Valenti,,1971-06-13,,1
 bittertasteofvictory|,The Bitter Taste of Victory,,,2016-04-09,,1,1,3.0,0,1,0,0,guardian_api
 bittertasteofvictory|feigel,The Bitter Taste of Victory,Lara Feigel,,2016-01-24,the-bitter-taste-of-victory-life-love-and-art-in-the-ruins-of-the-reich,4,4,3.0,1,2,1,0,guardian_api;independent;literary_review
 bittervictory|illustrated,Bitter Victory,Carlo D'Este. Illustrated.,,1988-11-27,,1,0,,0,0,0,0,nyt_api
-bittervictory|middleton,"Bitter Victory: The Battle For Sicily, 1943",Drew Middleton,,1988-09-08,,1,0,,0,0,0,0,nyt_api
 bittervictory|shaplen,Bitter Victory,Robert Shaplen,,1986-10-05,,1,0,,0,0,0,0,nyt_api
 bitterwashroad|disher,Bitter Wash Road,Garry Disher,,2013-10-30,,1,1,3.0,0,1,0,0,guardian_api
 bitterwaterofthelake|caminito,The Bitter Water of the Lake,Giulia Caminito,,2025-08-01,,1,1,2.0,0,0,1,0,literary_review
@@ -10879,7 +10879,6 @@ bookthecenterofthecycloneanautobiographyofinnerspace|lilly,Book The Center Of Th
 bookthechandlerheritage|haas,Book The Chandler Heritage,Ben Haas,,1972-02-13,,1,0,,0,0,0,0,nyt_api
 bookthechangingpoliticsofthesouth|havard,Book The Changing Politics Of The South,W C Havard,,1972-09-17,,1,0,,0,0,0,0,nyt_api
 bookthechantofjimmieblacksmith|keneally,Book The Chant Of Jimmie Blacksmith,Thomas Keneally,,1972-08-27,,2,0,,0,0,0,0,nyt_api
-bookthecharismacampaigns|matthews,Book The Charisma Campaigns,Jack Matthews,,1972-03-19,,1,0,,0,0,0,0,nyt_api
 bookthecheerleaderbyrdmacdougall|macdougall,"Book The Cheerleader, by R D MacDougall",Ruth Doan MacDougall,,1973-02-01,,1,0,,0,0,0,0,nyt_api
 bookthechildrenofcolumbus|amfitheatrof,Book The Children Of Columbus,Erik Amfitheatrof,,1973-05-20,,1,0,,0,0,0,0,nyt_api
 bookthechinatradeexportpaintingsfurnituresilverandotherobjects|crossman,"Book The China Trade. Export Paintings, Furniture, Silver And Other Objects",Carl L Crossman,,1972-12-02,,1,0,,0,0,0,0,nyt_api
@@ -13779,7 +13778,7 @@ caracole|white,Caracole,Edmund White,,1985-09-15,,1,0,,0,0,0,0,nyt_api
 caramelo|ciseros,Caramelo,Sandra Ciseros,,2002-09-29,,1,0,,0,0,0,0,nyt_api
 caramelo|cisneros,Caramelo,Sandra Cisneros,,2002-12-21,,1,1,4.0,1,0,0,0,guardian_api
 caravaggioconspiracy|watson,The Caravaggio Conspiracy,Peter Watson,,1983-12-22,,1,0,,0,0,0,0,nyt_api
-caravaggio|grahamdixon,Caravaggio: A Life Sacred and Profane,Andrew Graham-Dixon,,2010-07-03,,4,4,2.5,1,1,1,1,guardian_api;independent
+caravaggio|grahamdixon,Caravaggio: A Life Sacred and Profane,Andrew Graham-Dixon,,2010-07-03,,3,3,2.667,1,1,0,1,guardian_api;independent
 caravaggio|langdon,Caravaggio: A Life,Helen Langdon,,2017-11-23,,1,1,4.0,1,0,0,0,literary_review
 caravaggio|prose,Caravaggio: Painter Of Miracles,Francine Prose,,2005-10-02,,1,0,,0,0,0,0,nyt_api
 caravansary|combray,Caravansary: Alone In Moslem Places,Richard De Combray,,1978-04-12,,1,0,,0,0,0,0,nyt_api
@@ -14851,7 +14850,7 @@ chaucer|illustrated,"Chaucer: His Life, His Works, His World",Donald R. Howard. 
 chaucer|turner,Chaucer: A European Life,Marion Turner,,2019-03-27,chaucer-a-european-life,1,1,4.0,1,0,0,0,literary_review
 chautauqua|keene,Chautauqua,D Keene,,1960-03-27,,1,0,,0,0,0,0,nyt_api
 chavezandthefarmworkers|taylor,Chavez And The Farm Workers,Ronald B Taylor,,1975-07-11,,1,0,,0,0,0,0,nyt_api
-chavs|jones,Chavs: The Demonization of the Working Class,Owen Jones,,2011-06-02,,4,4,3.0,0,4,0,0,guardian_api;independent
+chavs|jones,Chavs: The Demonization of the Working Class,Owen Jones,,2011-06-02,,3,3,3.0,0,3,0,0,guardian_api;independent
 cheapeaters|bernhard,The Cheap-Eaters,Thomas Bernhard,,2021-04-20,,1,1,4.0,1,0,0,0,tls
 cheaplandcolorado|conover,Cheap Land Colorado: Off-Gridders at America's Edge,Ted Conover,,2022-11-02,cheap-land-colorado-off-gridders-at-americas-edge,1,0,,0,0,0,0,nyt_api
 cheaptickettoheaven|smith,Cheap Ticket To Heaven,Charlie Smith.,,1996-09-22,,1,0,,0,0,0,0,nyt_api
@@ -14930,7 +14929,6 @@ cherokeebatandthegoatguys|block,Cherokee Bat And The Goat Guys,Francesca Lia Blo
 cherokeetragedythestoryoftheridgefamilyandthedecimationofapeople|wilkins,Cherokee Tragedy. The Story Of The Ridge Family And The Decimation Of A People,Thurman Wilkins,,1970-11-22,,1,0,,0,0,0,0,nyt_api
 cherokee|echenoz,Cherokee,Jean Echenoz. Translated by Mark Polizzotti.,,1987-09-20,,1,0,,0,0,0,0,nyt_api
 cherpapa|kohner,Cher Papa,F Kohner,,1960-01-03,,1,0,,0,0,0,0,nyt_api
-cherriesandcherrypits|thurman,Cherries And Cherry Pits,Judith Thurman,,1986-11-09,,1,0,,0,0,0,0,nyt_api
 cherriesinthesnow|forrest,Cherries in the Snow,Emma Forrest,,2005-06-11,,2,2,3.0,1,0,1,0,guardian_api
 cherryingram|abe,Cherry’ Ingram,Naoko Abe,,2019-02-27,,2,2,4.0,2,0,0,0,guardian_api;literary_review
 cherry|karr,Cherry,Mary Karr,,2000-09-26,,2,0,,0,0,0,0,nyt_api
@@ -17749,7 +17747,6 @@ conversationsonreligion|gordon,Conversations on Religion,Mick Gordon,,2008-02-10
 conversationswithaclown|welzenbach,Conversations With A Clown,Michael Welzenbach,,1991-01-22,,1,0,,0,0,0,0,nyt_api
 conversationswithamericans|lane,Conversations With Americans,Mark Lane,,1970-12-27,,1,0,,0,0,0,0,nyt_api
 conversationswithamericanwriters|ruas,Conversations With American Writers,Charles Ruas,,1985-01-13,,1,0,,0,0,0,0,nyt_api
-conversationswithanorexics|hegeman,Conversations With Anorexics,Elizabeth Hegeman,,1988-05-08,,1,0,,0,0,0,0,nyt_api
 conversationswitharrau|horowitz,Conversations With Arrau,Joseph Horowitz,,1983-03-20,,1,0,,0,0,0,0,nyt_api
 conversationswithberenson|morra,Conversations With Berenson,U Morra,,1965-10-18,,1,0,,0,0,0,0,nyt_api
 conversationswithchinuaachebe|nan,Conversations with Chinua Achebe,,1997,2000,,1,0,,0,0,0,0,complete_review
@@ -18156,6 +18153,7 @@ courtingofmarcusdupree|morris,The Courting Of Marcus Dupree,Willie Morris,,1983-
 courtingshadows|poster,Courting Shadows,Jem Poster,,2002-07-12,,1,1,4.0,1,0,0,0,guardian_api
 courtmartialofgeorgearmstrongcuster|jones,The Court-Martial Of George Armstrong Custer,Douglas C Jones,,1976-11-21,,2,0,,0,0,0,0,nyt_api
 courtmartialofltcalley|hammer,The Court-Martial Of Lt Calley,Richard Hammer,,1971-09-07,,1,0,,0,0,0,0,nyt_api
+courtmartialofltcalley|wicker,The Court-Martial Of Lt Calley,Tom Wicker,,1971-09-12,,1,0,,0,0,0,0,nyt_api
 courtnumberone|grant,Court Number One: The Old Bailey Trials That Defined Modern Britain,Thomas Grant,,2019-08-27,,1,1,3.0,0,1,0,0,literary_review
 courtofcommonpleas|marshall,The Court Of Common Pleas,Alexandra Marshall,,2001-08-26,,1,0,,0,0,0,0,nyt_api
 courtofmemory|mcconkey,"Court Of Memory,",James McConkey,,1983-01-16,,1,0,,0,0,0,0,nyt_api
@@ -18914,6 +18912,7 @@ culturalrevolution|dikotterillustrated,"The Cultural Revolution: A People's Hist
 culturalrevolution|wong,Cultural Revolution,Norman Wong,,1994-03-27,,1,0,,0,0,0,0,nyt_api
 culturalselection|taylor,Cultural Selection,Gary Taylor,,1996-04-05,,2,0,,0,0,0,0,nyt_api
 cultureandcommitmentastudyofthegenerationgap|mead,Culture And Commitment. A Study Of The Generation Gap,Margaret Mead,,1970-01-08,,1,0,,0,0,0,0,nyt_api
+cultureandcommitmentastudyofthegenerationgap|nixon,Culture And Commitment. A Study Of The Generation Gap,Richard Milhous Nixon,,1970-03-08,,1,0,,0,0,0,0,nyt_api
 cultureandimperialism|said,Culture and Imperialism,Edward W Said,,1993-03-09,,2,1,1.0,0,0,0,1,literary_review;nyt_api
 cultureandthedeathofgod|eagleton,Culture and the Death of God,Terry Eagleton,,2014-02-21,,1,1,2.0,0,0,1,0,independent
 culturechangementalhealthandpoverty|finney,"Culture Change, Mental Health And Poverty",Joseph Finney,,1969-05-11,,1,0,,0,0,0,0,nyt_api
@@ -21442,7 +21441,7 @@ dickens|collins,Dickens: Interviews and Recollections,Philip Collins,,2016-02-24
 dickens|illustrated,Dickens: A Biography,Fred Kaplan. Illustrated.,,1988-11-13,,1,0,,0,0,0,0,nyt_api
 dickens|kaplan,Dickens,Fred Kaplan,,1988-10-25,,1,0,,0,0,0,0,nyt_api
 dickens|marcus,Dickens: From Pickwick To Dombey,S Marcus,,1965-05-16,,1,0,,0,0,0,0,nyt_api
-dickgibsonshow|elkin,The Dick Gibson Show,Stanley Elkin,,1971-02-17,,2,0,,0,0,0,0,nyt_api
+dickgibsonshow|elkin,The Dick Gibson Show,Stanley Elkin,,1971-02-17,,3,0,,0,0,0,0,nyt_api
 dickinsonsnervesfrostswoods|logan,"Dickinson's Nerves, Frost's Woods: Poetry in the Shadow of the Past",William Logan,,2018-08-31,,1,0,,0,0,0,0,nyt_api
 dickturpin|deary,Dick Turpin: Legends and Lies,Terry Deary,,2007-06-30,,1,1,4.0,1,0,0,0,guardian_api
 dickturpin|sharpe,Dick Turpin: The Myth of the English Highwayman,James Sharpe,,2004-01-31,,2,2,3.5,1,1,0,0,guardian_api;literary_review
@@ -25551,7 +25550,6 @@ everyfrenchmanhasone|havilland,Every Frenchman Has One,Olivia De Havilland,,1962
 everygoodboydoesfine|denk,Every Good Boy Does Fine,Jeremy Denk,,2022-03-24,every-good-boy-does-fine-a-love-story-in-music-lessons,2,1,4.0,1,0,0,0,guardian_api;nyt_api
 everygoodbyeaintgone|njeri,Every Good-Bye Ain't Gone,Itabari Njeri,,1990-02-04,,1,0,,0,0,0,0,nyt_api
 everyhiddenthing|,Every Hidden Thing,,,2017-03-11,,1,1,3.0,0,1,0,0,guardian_api
-everyhunterwantstoknow|mittelmark,Every Hunter Wants To Know,Howard Mittelmark,,1991-11-17,,1,0,,0,0,0,0,nyt_api
 everyislandfledaway|sanford,Every Island Fled Away,John Sanford.,,1964-11-22,,1,0,,0,0,0,0,nyt_api
 everykindofpeople|faulke,Every Kind of People,Kathryn Faulke,,2024-12-04,,1,1,4.0,1,0,0,0,tls
 everylastfish|george,Every Last Fish: What Fish Do for Us and What We Do to Them,Rose George,,2025-10-01,,2,2,3.5,1,1,0,0,literary_review;tls
@@ -25972,6 +25970,7 @@ exquisitecorpse|chester,The Exquisite Corpse,A Chester,,1967-03-05,,1,0,,0,0,0,0
 exquisitecorpse|irwin,Exquisite Corpse,Robert Irwin,,1997-05-25,,1,0,,0,0,0,0,nyt_api
 extendedmind|paul,The Extended Mind,Annie Murphy Paul,,2021-06-11,the-extended-mind-the-power-of-thinking-outside-the-brain,1,0,,0,0,0,0,nyt_api
 extendedorganism|illustrated,The Extended Organism,J. Scott Turner. Illustrated.,,2000-12-10,,1,0,,0,0,0,0,nyt_api
+extenuatingcircumstance|lord,Extenuating Circumstance,Eda Lord,,1971-11-17,,1,0,,0,0,0,0,nyt_api
 exterminateallthebrutes|lindqvist,Exterminate All the Brutes,Sven Lindqvist.Translated by Joan Tate.Illustrated.,,1996-08-18,,1,0,,0,0,0,0,nyt_api
 exterminator|burroughs,Exterminator!,William S Burroughs,,1973-10-14,,1,0,,0,0,0,0,nyt_api
 exterminator|catling,The Exterminator,Patrick Skene Catling,,1969-08-24,,1,0,,0,0,0,0,nyt_api
@@ -27541,6 +27540,7 @@ fighters|chivers,The Fighters: Americans in Combat in Afghanistan and Iraq,C. J.
 fighterthetruestoryofthebattleofbritain|deighton,Fighter. The True Story Of The Battle Of Britain,Len Deighton,,1978-07-09,,1,0,,0,0,0,0,nyt_api
 fighter|parks,The Fighter,Tim Parks,,2007-09-22,,4,4,3.25,1,3,0,0,guardian_api;independent
 fightforfreedom|hughes,Fight For Freedom: The Story Of The Naacp,L Hughes,,1962-09-02,,1,0,,0,0,0,0,nyt_api
+fightforquiet|berland,The Fight For Quiet,Theodore Berland,,1970-11-29,,1,0,,0,0,0,0,nyt_api
 fightforthesea|lewis,"The Fight For The Sea: The Past, Present And Future Of Submarine Warfare In The Atlantic",D D Lewis,,1961-01-15,,1,0,,0,0,0,0,nyt_api
 fightingback|holbrook,Fighting Back,Sabra Holbrook.,,1987-04-05,,1,0,,0,0,0,0,nyt_api
 fightingboblafollette|unger,Fighting Bob La Follette: The Righteous Reformer,Nancy C Unger,,2000-10-08,,1,0,,0,0,0,0,nyt_api
@@ -28702,7 +28702,7 @@ forbiddenterritory|goytisolo,Forbidden Territory,Juan Goytisolo,1985,1988,,4,3,3
 forbiddenzone|lesy,The Forbidden Zone,Michael Lesy.,,1987-07-19,,2,0,,0,0,0,0,nyt_api
 forbidden|tallis,The Forbidden,FR Tallis,,2012-06-23,,1,1,4.0,1,0,0,0,independent
 forbushandthepenguins|billing,Forbush And The Penguins,G Billing,,1966-03-18,,2,0,,0,0,0,0,nyt_api
-forcapitalpunishmentcrimeandthemoralityofthedeathpenalty|berns,For Capital Punishment. Crime And The Morality Of The Death Penalty,Walter F Berns,,1979-07-16,,1,0,,0,0,0,0,nyt_api
+forcapitalpunishmentcrimeandthemoralityofthedeathpenalty|berns,For Capital Punishment. Crime And The Morality Of The Death Penalty,Walter F Berns,,1979-07-16,,2,0,,0,0,0,0,nyt_api
 forcauseandcomrades|mcpherson,For Cause And Comrades,James M McPherson,,1997-03-06,,2,0,,0,0,0,0,nyt_api
 forcedentriesthedowntowndiaries|carroll,Forced Entries. The Downtown Diaries: 1971-1973,Jim Carroll.,,1987-08-02,,1,0,,0,0,0,0,nyt_api
 forcedentry|solomita,Forced Entry,Stephen Solomita,,1990-10-14,,1,0,,0,0,0,0,nyt_api
@@ -29973,7 +29973,6 @@ fromthunderstruck|,From Thunderstruck,Elizabeth McCracken to 10,,2015-07-17,,1,1
 fromtimetotime|finney,From Time To Time,Jack Finney,,1995-02-03,,2,0,,0,0,0,0,nyt_api
 fromtrusttoterrortheonsetofthecoldwar19451950|feis,From Trust To Terror. The Onset Of The Cold War 1945-1950,Herbert Feis,,1970-12-26,,2,0,,0,0,0,0,nyt_api
 fromtudortostuart|doran,From Tudor to Stuart: The Regime Change from Elizabeth I to James I,Susan Doran,,2024-06-01,,1,1,4.0,1,0,0,0,literary_review
-fromvillastellar|barker,From Villa Stellar,George Barker,,2008-04-18,,1,1,4.0,1,0,0,0,guardian_api
 fromvotingtoviolence|snyder,From Voting To Violence,Jack Snyder,,2000-04-23,,1,0,,0,0,0,0,nyt_api
 fromwarsawwithlove|pomfret,From Warsaw with Love,John Pomfret,,2022-03-09,from-warsaw-with-love-polish-spies-the-cia-and-the-forging-of-an-unlikely-alliance,1,1,4.0,1,0,0,0,tls
 fromwartowarthearabisraeliconfrontation|safran,From War To War. The Arab-Israeli Confrontation (1948-1967),Nadav Safran,,1969-09-28,,1,0,,0,0,0,0,nyt_api
@@ -30444,7 +30443,6 @@ gardeneroflashkargah|brown,The Gardener of Lashkar Gah,Larisa Brown,,2023-08-30,
 gardenersyearbook|newsome,The Gardener's Year Book,Geoffrey Newsome,,2015-04-30,,1,1,4.0,1,0,0,0,literary_review
 gardenersyear|capek,The Gardener's Year,Karel Capek,,1984-12-02,,1,0,,0,0,0,0,nyt_api
 gardenertotheking|richard,Gardener To The King,Frederic Richard,,2001-05-13,,1,0,,0,0,0,0,nyt_api
-gardenertouchedwithgeniusathelifeoflutherburbank|gould,"Gardener Touched With Genius, A. The Life Of Luther Burbank",Stephen Jay Gould,,1975-11-16,,1,0,,0,0,0,0,nyt_api
 gardener|stewart,The Gardener,Sarah Stewart,,1997-11-16,,1,0,,0,0,0,0,nyt_api
 gardener|vickers,The Gardener,Salley Vickers,,2021-10-26,,2,2,3.0,1,0,1,0,arts_desk;literary_review
 gardeninautumn|lacy,The Garden In Autumn,Allen Lacy,,1990-12-02,,1,0,,0,0,0,0,nyt_api
@@ -34035,7 +34033,6 @@ hannahsdaugherssixgenerationsofanamericanfamily|gallagher,Hannah's Daughers. Six
 hannahsdress|delogu,Hannah’s Dress: Berlin 1904–2014,C Jon Delogu,,2017-04-04,,1,1,3.0,0,1,0,0,literary_review
 hannah|sulitzer,Hannah,Paul-Loup Sulitzer,,1989-08-27,,1,0,,0,0,0,0,nyt_api
 hannah|whelan,Hannah,Gloria Whelan,,1991-07-14,,1,0,,0,0,0,0,nyt_api
-hannasheehyskeffington|tax,Hanna Sheehy-Skeffington,Meredith Tax,,1986-09-07,,1,0,,0,0,0,0,nyt_api
 hannibalchallengingromessupremacy|beer,Hannibal. Challenging Rome's Supremacy,Gavin De Beer,,1969-11-23,,1,0,,0,0,0,0,nyt_api
 hannibalrising|harris,Hannibal Rising,Thomas Harris,,2006-12-08,,5,3,2.667,1,0,2,0,guardian_api;independent;nyt_api
 hannibalslegacy|toynbee,Hannibal's Legacy: The Hannibalic War's Effects On Roman Life,A J Toynbee,,1966-02-13,,1,0,,0,0,0,0,nyt_api
@@ -37555,7 +37552,7 @@ hughjohnsonspocketwinebook2007|,Hugh Johnson's Pocket Wine Book 2007,,,2006-11-2
 hughjohnsonspocketwinebook|,Hugh Johnson's Pocket Wine Book,,,2002-12-22,,2,0,,0,0,0,0,nyt_api
 hughjohnsonspocketwinebook|johnson,Hugh Johnson's Pocket Wine Book,Hugh Johnson,,2003-11-09,,2,0,,0,0,0,0,nyt_api
 hughpineandthegoodplace|wetering,Hugh Pine And The Good Place,Janwillem van de Wetering,,1986-11-09,,1,0,,0,0,0,0,nyt_api
-hughtrevorroper|sisman,Hugh Trevor-Roper: The Biography,Adam Sisman,,2010-07-10,,4,4,3.75,3,1,0,0,guardian_api;independent
+hughtrevorroper|sisman,Hugh Trevor-Roper: The Biography,Adam Sisman,,2010-07-10,,3,3,3.667,2,1,0,0,guardian_api;independent
 hughtrevorroper|worden,Hugh Trevor-Roper: The Historian,Blair Worden,,2016-03-31,,1,1,4.0,1,0,0,0,literary_review
 hugoblackandthejudicialrevolution|dunne,Hugo Black And The Judicial Revolution,Gerald T Dunne,,1977-04-10,,1,0,,0,0,0,0,nyt_api
 hugowolfabiography|walker,Hugo Wolf. A Biography,Frank Walker,,1968-09-08,,1,0,,0,0,0,0,nyt_api
@@ -41143,7 +41140,7 @@ israelhasmoved|pinto,Israel has Moved,Diana Pinto,,2013-02-28,,1,1,3.0,0,1,0,0,i
 israelinthemindofamerica|grose,Israel In The Mind Of America,Peter Grose,,1983-12-25,,1,0,,0,0,0,0,nyt_api
 israelirepublic|ahmad,The Israeli Republic,Jalal Al-e Ahmad,1964,2014,,1,1,3.0,0,1,0,0,complete_review
 israelisandpalestinians|glover,Israelis and Palestinians,Jonathan Glover,,2024-01-11,,1,1,4.0,1,0,0,0,guardian_api
-israelisfoundersandsons|elon,The Israelis. Founders And Sons,Amos Elon,,1971-05-01,,1,0,,0,0,0,0,nyt_api
+israelisfoundersandsons|elon,The Israelis. Founders And Sons,Amos Elon,,1971-05-01,,2,0,,0,0,0,0,nyt_api
 israelisreal|cohen,Israel Is Real,Rich Cohen,,2009-11-14,,1,1,2.0,0,0,1,0,guardian_api
 israelis|golden,The Israelis,Harry Golden,,1971-03-07,,1,0,,0,0,0,0,nyt_api
 israeliwomen|hazleton,Israeli Women,Lesley Hazleton,,1978-02-26,,1,0,,0,0,0,0,nyt_api
@@ -41381,7 +41378,6 @@ itwillendwithus|savage,It Will End With Us,Sam Savage,,2015-01-09,,1,0,,0,0,0,0,
 itwouldbenightincaracas|borgo,It Would Be Night in Caracas,Karina Sainz Borgo,,2019-10-18,it-would-be-night-in-caracas,1,0,,0,0,0,0,nyt_api
 it|chung,It,Alexa Chung,,2013-09-09,,1,1,1.0,0,0,0,1,guardian_api
 it|king,It,Stephen King,,1986-08-21,,1,0,,0,0,0,0,nyt_api
-it|wager,It,Walter Wager,,1986-08-24,,1,0,,0,0,0,0,nyt_api
 iusedtobeananimalbutimallrightnow|burdon,"I Used To Be An Animal, But I'm All Right Now",Eric Burdon,,1987-05-03,,1,0,,0,0,0,0,nyt_api
 iusedtobecharming|babitz,I Used To Be Charming,Eve Babitz,,2020-02-06,i-used-to-be-charming-the-rest-of-eve-babitz,1,1,3.0,0,1,0,0,tls
 iusedtolivehereonce|rhys,I Used to Live Here Once: The Haunted Life of Jean Rhys,Jean Rhys,,2022-06-20,,1,0,,0,0,0,0,nyt_api
@@ -42925,7 +42921,6 @@ karaoke|xun,Karaoke: The Global Phenomenon,Zhou Xun and Francesca Tarocco,,2007-
 karatechopminnaneedsrehearsalspace|nors,Karate Chop/Minna Needs Rehearsal Space,Dorthe Nors,,2015-03-04,,1,1,4.0,1,0,0,0,guardian_api
 karatechop|nors,Karate Chop,Dorthe Nors,2008,2008-09-27,karate-chop-stories,4,4,3.25,1,3,0,0,complete_review
 karateisathingofthespirit|crews,Karate Is A Thing Of The Spirit,Harry Crews,,1971-04-25,,1,0,,0,0,0,0,nyt_api
-kareem|plimpton,Kareem,George Plimpton,,1990-03-25,,1,0,,0,0,0,0,nyt_api
 karenannthequinlanstelltheirstory|joseph,Karen Ann. The Quinlans Tell Their Story,Joseph And Julia Quinlan,,1977-10-09,,1,0,,0,0,0,0,nyt_api
 karimayi|kambar,Karimayi,Chandrasekhar Kambar,1975,,,1,0,,0,0,0,0,complete_review
 karitasuntitled|baldursdottir,Karitas Untitled,Kristin Marja Baldursdottir,,2022-03-29,,1,1,2.0,0,0,1,0,tls
@@ -54672,7 +54667,6 @@ myredheaven|olsen,My Red Heaven,Lance Olsen,2020,2019-11-15,my-red-heaven,1,1,3.
 myrevolutionpromenadesinparis17891794|illustrated,My Revolution. Promenades In Paris 1789-1794,Alex Karmel. Illustrated.,,1970-11-29,,1,0,,0,0,0,0,nyt_api
 myrevolutions|kunzru,My Revolutions,Hari Kunzru,,2007-08-25,,5,5,3.6,3,2,0,0,guardian_api;independent
 myriadfacesofwar|taubes,The Myriad Faces Of War,Gary Taubes.,,1987-01-25,,1,0,,0,0,0,0,nyt_api
-myrnaloy|kleiman,Myrna Loy: Being And Becoming,Rena Kleiman,,1988-01-17,,1,0,,0,0,0,0,nyt_api
 myroadtoberlin|brandt,My Road To Berlin,Willy Brandt,,1960-06-05,,1,0,,0,0,0,0,nyt_api
 myroadtooperatherecollectionsofborisgoldovsky|cate,My Road To Opera. The Recollections Of Boris Goldovsky,Curtis Cate,,1979-04-22,,1,0,,0,0,0,0,nyt_api
 myrobotbuddy|slote,My Robot Buddy,Alfred Slote,,1976-01-25,,1,0,,0,0,0,0,nyt_api
@@ -56348,7 +56342,6 @@ nightofthepigkilling|szabo,Night Of The Pig-Killing,M Szabo,,1966-01-23,,1,0,,0,
 nightoftheshootingstar|vipond,Night of the Shooting Star,Don Vipond,,1975-10-26,,1,0,,0,0,0,0,nyt_api
 nightoftheshortknives|wilkinson,Night Of The Short Knives,B Wilkinson,,1964-08-19,,1,0,,0,0,0,0,nyt_api
 nightofthetwelth|gilbert,A Night Of The Twelth,Michael Gilbert,,1976-08-29,,1,0,,0,0,0,0,nyt_api
-nightoftheweepingwomen|gladstone,The Night Of The Weeping Women,Valerie Gladstone,,1988-09-11,,1,0,,0,0,0,0,nyt_api
 nightofthewhitebear|knox,Night Of The White Bear,Alexander Knox,,1971-09-19,,1,0,,0,0,0,0,nyt_api
 nightoftrees|williams,The Night Of Trees,T Williams,,1961-11-19,,2,0,,0,0,0,0,nyt_api
 nightoftriumph|bradshaw,Night of Triumph,Peter Bradshaw,,2013-06-12,,1,1,4.0,1,0,0,0,guardian_api
@@ -57519,7 +57512,6 @@ number|berenson,The Number,Alex Berenson,,2003-04-06,,1,0,,0,0,0,0,nyt_api
 numerati|baker,The Numerati,Stephen Baker,,2008-12-12,,1,1,3.0,0,1,0,0,independent
 numerozero|,Numero Zero,,,2015-11-26,,1,1,1.0,0,0,0,1,guardian_api
 numerozero|eco,Numero Zero,Umberto Eco,,2015-11-15,numero-zero,2,2,2.0,0,1,0,1,guardian_api;independent
-nuncamas|stepan,Nunca Mas,Alfred Stepan,,1986-11-23,,1,0,,0,0,0,0,nyt_api
 nuncleandotherstories|wain,Nuncle And Other Stories,J Wain,,1961-07-16,,2,0,,0,0,0,0,nyt_api
 nuninthecloset|gilman,A Nun In the Closet,Dorothy Gilman,,1975-03-16,,1,0,,0,0,0,0,nyt_api
 nunnery|charques,The Nunnery,D Charques,,1960-04-04,,2,0,,0,0,0,0,nyt_api
@@ -60008,7 +60000,6 @@ overcominglaw|posner,Overcoming Law,Richard A. Posner.,,1995-02-26,,1,0,,0,0,0,0
 overcomingthefearofdeath|gordon,Overcoming The Fear Of Death,David Cole Gordon,,1971-05-23,,1,0,,0,0,0,0,nyt_api
 overdriveapersonaldocumentary|illustrated,Overdrive. A Personal Documentary,William F. Buckley Jr. Illustrated.,,1983-08-07,,1,0,,0,0,0,0,nyt_api
 overdrive|wallace,Overdrive: Bill Gates And The Race To Control Cyberspace,James Wallace,,1997-07-20,,1,0,,0,0,0,0,nyt_api
-overexposed|kohn,Overexposed: Treating Sexual Perversion In America,Alfie Kohn,,1988-03-27,,1,0,,0,0,0,0,nyt_api
 overexposure|rifkind,Over Exposure,Hugo Rifkind,,2006-08-05,,1,1,4.0,1,0,0,0,independent
 overhaul|jamie,The Overhaul,Kathleen Jamie,,2012-11-09,,2,2,4.0,2,0,0,0,guardian_api
 overheadinaballoon|gallant,Overhead In A Balloon,Mavis Gallant,,1987-03-04,,2,0,,0,0,0,0,nyt_api
@@ -61510,7 +61501,7 @@ pennywars|baker,The Penny Wars,Elliott Baker,,1968-07-28,,1,0,,0,0,0,0,nyt_api
 penroseannual1966|spencer,The Penrose Annual 1966,H Spencer,,1966-06-05,,1,0,,0,0,0,0,nyt_api
 penswordcamisole|amado,"Pen, Sword, Camisole: A Fable To Kindle A Hope",Jorge Amado,,1985-05-19,,1,0,,0,0,0,0,nyt_api
 pentagoncountry|blair,Pentagon Country,Clay Jr Blair,,1971-12-19,,1,0,,0,0,0,0,nyt_api
-pentagonofpowerthemythofthemachinevolii|mumford,"The Pentagon Of Power. The Myth Of The Machine, Vol Ii",Lewis Mumford,,1970-11-09,,2,0,,0,0,0,0,nyt_api
+pentagonofpowerthemythofthemachinevolii|mumford,"The Pentagon Of Power. The Myth Of The Machine, Vol Ii",Lewis Mumford,,1970-11-09,,3,0,,0,0,0,0,nyt_api
 pentagonpartnersthenewnobility|tyrrell,"Pentagon Partners, The New Nobility",C Merton Tyrrell,,1970-12-29,,1,0,,0,0,0,0,nyt_api
 pentagonunderground|rasor,The Pentagon Underground,Dina Rasor,,1985-12-01,,1,0,,0,0,0,0,nyt_api
 pentagonwars|illustrated,The Pentagon Wars,James G. Burton. Illustrated.,,1993-10-03,,1,0,,0,0,0,0,nyt_api
@@ -67787,6 +67778,7 @@ rise|,"Rise: Life Lessons in Speaking Out, Standing Tall and Leading the Way",,,
 rise|campbell,Rise,Karen (1967- ) Campbell,,2015-07-17,,1,0,,0,0,0,0,nyt_api
 rise|young,Rise,Liam Young,,2018-03-06,,2,2,1.5,0,0,1,1,guardian_api
 rising44|davies,Rising '44,Norman Davies,,2003-11-15,,3,2,3.5,1,1,0,0,guardian_api;literary_review;nyt_api
+risingandfalling|matthews,Rising And Falling,William Matthews,,1979-10-21,,1,0,,0,0,0,0,nyt_api
 risingblood|fleming,Rising Blood,James Fleming,,2011-07-29,,1,1,4.0,1,0,0,0,guardian_api
 risingdown|harris,The Rising Down,Alexandra Harris,,2024-02-29,,3,3,3.333,1,2,0,0,guardian_api;literary_review;tls
 risingfromtheplains|mcphee,Rising From The Plains,John Mcphee,,1986-11-10,,2,0,,0,0,0,0,nyt_api
@@ -68581,7 +68573,7 @@ rubberbullets|ezrahi,Rubber Bullets,Yaron Ezrahi,,1997-03-02,,1,0,,0,0,0,0,nyt_a
 rubbishthearcheologyofgarbage|rathje,Rubbish! The Archeology Of Garbage,William Rathje and Cullen Murphy. Illustrated.,,1992-07-05,,2,0,,0,0,0,0,nyt_api
 rubbishtheory|thompson,Rubbish Theory: The Creation and Destruction of Value,Michael Thompson,,2017-06-23,,1,1,4.0,1,0,0,0,guardian_api
 rubbleflora|braun,Rubble Flora,Volker Braun,2014,,,1,0,,0,0,0,0,complete_review
-rubiconbeach|erickson,Rubicon Beach,Steve Erickson,1986,1986-09-08,,4,3,3.333,1,2,0,0,complete_review;nyt_api
+rubiconbeach|erickson,Rubicon Beach,Steve Erickson,1986,1986-09-08,,3,3,3.333,1,2,0,0,complete_review
 rubiconbytomhollandread|sachs,"Rubicon, by Tom Holland, read",Andrew Sachs,,2007-11-03,,1,1,4.0,1,0,0,0,guardian_api
 rubicon|holland,Rubicon: The Triumph and Tragedy of the Roman Republic,Tom Holland,,2003-08-24,,3,3,3.667,2,1,0,0,guardian_api;literary_review
 rubicon|mykle,Rubicon,A Mykle,,1967-04-02,,1,0,,0,0,0,0,nyt_api
@@ -70561,7 +70553,6 @@ seeingserena|marzorati,Seeing Serena,Gerald Marzorati,,2021-06-17,seeing-serena,
 seeingstars|armitage,Seeing Stars,Simon Armitage,,2011-02-18,,1,1,4.0,1,0,0,0,independent
 seeingstick|yolen,The Seeing Stick,Jane Yolen,,1978-01-01,,1,0,,0,0,0,0,nyt_api
 seeingstone|crossleyholland,The Seeing Stone,Kevin Crossley-Holland,,2001-09-10,,1,1,4.0,1,0,0,0,guardian_api
-seeingtheunseen|benson,Seeing The Unseen,Richard Benson,,1995-03-19,,1,0,,0,0,0,0,nyt_api
 seeingthingsastheyare|davison,Seeing Things As They Are: Selected Journalism and Other Writing of George Orwell,Peter Davison,,2014-12-17,,1,1,3.0,0,1,0,0,independent
 seeingthingsastheyare|orwell,Seeing Things as They Are: Selected Journalism and Other Writings,George Orwell,,2015-01-02,,1,1,3.0,0,1,0,0,independent
 seeingthroughclothes|hollander,Seeing Through Clothes,Anne Hollander,,1978-11-20,,2,0,,0,0,0,0,nyt_api
@@ -71159,7 +71150,6 @@ sevenplays|brecht,Seven Plays,B Brecht,,1961-02-19,,1,0,,0,0,0,0,nyt_api
 sevenpoortravellers|dickens,The Seven Poor Travellers,Charles Dickens,,2010-12-17,,1,1,4.0,1,0,0,0,independent
 sevenriverswest|hoagland,Seven Rivers West,Edward Hoagland,,1986-09-16,,2,0,,0,0,0,0,nyt_api
 sevensamuraisweptawayinariver|moon,Seven Samurai Swept Away in a River,Jung Young Moon,2018,2019-09-15,,2,1,3.0,0,1,0,0,complete_review;kirkus
-sevenseasons|forbath,Seven Seasons,Peter Forbath,,1971-06-20,,1,0,,0,0,0,0,nyt_api
 sevensinsofmemory|schacter,The Seven Sins Of Memory,Daniel L Schacter,,2001-05-20,,1,0,,0,0,0,0,nyt_api
 sevensistersthethegreatoilcompaniesandtheworldtheymade|sampson,"Seven Sisters, The. The Great Oil Companies And The World They Made",Anthony Sampson,,1975-10-19,,1,0,,0,0,0,0,nyt_api
 sevensisters|drabble,The Seven Sisters,Margaret Drabble,,2002-08-31,,5,3,2.333,0,1,2,0,guardian_api;independent;nyt_api
@@ -73694,7 +73684,6 @@ somehow|lamott,Somehow: Thoughts on Love,Anne Lamott,,2024-04-21,somehow-thought
 somekidsitaughtandwhattheytaughtme|clanchy,Some Kids I Taught and What They Taught Me,Kate Clanchy,,2019-04-04,,1,1,2.0,0,0,1,0,guardian_api
 somekindoffairytale|joyce,Some Kind of Fairy Tale,Graham Joyce,,2012-07-04,,1,1,2.0,0,0,1,0,guardian_api
 somekindofhero|kirkwood,Some Kind Of Hero,James Kirkwood,,1975-09-28,,1,0,,0,0,0,0,nyt_api
-somekindofparadise|tallmadge,Some Kind Of Paradise,John Tallmadge,,1990-01-07,,1,0,,0,0,0,0,nyt_api
 somekindofpeace|grebe,Some Kind of Peace,Camilla Grebe and Asa Traff,,2013-01-19,,1,1,3.0,0,1,0,0,independent
 somelimericks|douglas,Some Limericks,N Douglas,,1967-08-27,,1,0,,0,0,0,0,nyt_api
 someluck|,Some Luck,,,2014-11-05,,1,1,3.0,0,1,0,0,guardian_api
@@ -74776,7 +74765,6 @@ springmoon|lord,Spring Moon,Bette Bao Lord,,1981-10-25,,1,0,,0,0,0,0,nyt_api
 springoflove|dale,A Spring of Love,Celia Dale,,2024-12-04,,1,1,2.0,0,0,1,0,tls
 springofmalice|harris,The Spring Of Malice,J Harris,,1962-10-28,,1,0,,0,0,0,0,nyt_api
 springsofaffection|brennan,The Springs Of Affection,Maeve Brennan,,1997-12-14,,1,0,,0,0,0,0,nyt_api
-springsoflivingwater|childress,Springs Of Living Water,Mark Childress,,1990-03-25,,1,0,,0,0,0,0,nyt_api
 springsong|gary,Spring Song,J Gary,,1960-11-11,,2,0,,0,0,0,0,nyt_api
 springtides|gell,Spring Tides,Fiona Gell,,2022-07-05,,1,1,4.0,1,0,0,0,tls
 springtides|morison,Spring Tides,S E Morison,,1965-08-12,,2,0,,0,0,0,0,nyt_api
@@ -75573,7 +75561,7 @@ storiesofedithwharton|brookner,The Stories Of Edith Wharton,Anita Brookner,,1990
 storiesofenglish|crystal,The Stories of English,David Crystal,,2004-06-05,,3,2,3.5,1,1,0,0,guardian_api;nyt_api
 storiesofevaluna|allende,The Stories Of Eva Luna,Isabel Allende,,1991-01-20,,1,0,,0,0,0,0,nyt_api
 storiesofhanschristianandersenbyhanschristianandersentranslated|frank,"The Stories of Hans Christian Andersen by Hans Christian Andersen, translated",Jeffrey Frank,,2004-12-04,,1,1,3.0,0,1,0,0,guardian_api
-storiesofhappypeople|gustafsson,Stories of Happy People,Lars Gustafsson,1981,1986-09-07,,2,1,4.0,1,0,0,0,complete_review;nyt_api
+storiesofhappypeople|gustafsson,Stories of Happy People,Lars Gustafsson,1981,1986-09-07,,1,1,4.0,1,0,0,0,complete_review
 storiesofheinrichboll|boll,The Stories Of Heinrich Boll,Heinrich Boll,,1986-02-23,,1,0,,0,0,0,0,nyt_api
 storiesofireland|friel,Stories of Ireland,Brian Friel,,2025-03-16,,1,1,4.0,1,0,0,0,guardian_api
 storiesofjohncheever|cheever,The Stories Of John Cheever,John Cheever,,1978-11-07,,2,0,,0,0,0,0,nyt_api
@@ -75967,7 +75955,7 @@ strangersatthegate|mcpherson,Strangers At The Gate,Catriona McPherson,2019,2019-
 strangersattheport|curtis,Strangers at the Port,Lauren Aimee Curtis,,2023-08-10,,3,3,2.333,1,0,1,1,guardian_api;literary_review;tls
 strangersbreadillustratedbydavidmcphail|willard,"Stranger's Bread, illustrated by David McPhail",Nancy Willard,,1977-09-25,,1,0,,0,0,0,0,nyt_api
 strangerschild|empathy,The Stranger's Child,Alan Hollinghurst Zero Degrees of Empathy,,2012-06-09,,1,1,3.0,0,1,0,0,independent
-strangerschild|hollinghurst,The Stranger's Child,Alan Hollinghurst,,2011-06-16,,4,4,3.75,3,1,0,0,guardian_api;independent
+strangerschild|hollinghurst,The Stranger's Child,Alan Hollinghurst,,2011-06-16,,3,3,3.667,2,1,0,0,guardian_api;independent
 strangersdarkandgold|johnson,Strangers Dark And Gold,Norma Johnson,,1975-05-11,,1,0,,0,0,0,0,nyt_api
 strangersdrowning|,Strangers Drowning,,,2015-10-05,,1,1,1.0,0,0,0,1,guardian_api
 strangersdrowning|macfarquhar,Strangers Drowning: Voyages to the Brink of Moral Extremity,Larissa MacFarquhar,,2015-11-30,strangers-drowning,1,1,2.0,0,0,1,0,literary_review
@@ -76292,7 +76280,6 @@ subjectofaportrait|harvey,The Subject of a Portrait,John Harvey,,2015-01-11,,1,1
 subjectsteve|lipsyte,The Subject Steve,Sam Lipsyte,,2001-10-28,,1,0,,0,0,0,0,nyt_api
 subjecttochange|gould,Subject To Change,Lois Gould,,1988-07-10,,1,0,,0,0,0,0,nyt_api
 subjecttodebate|pollitt,Subject To Debate,Katha Pollitt,,2001-02-25,,1,0,,0,0,0,0,nyt_api
-subjecttolimitation|romer,Subject to Limitation,Stephen Romer,,2008-03-29,,1,1,4.0,1,0,0,0,guardian_api
 sublimation|kim,Sublimation,Isabel J Kim,,2026-07-10,sublimation,1,1,4.0,1,0,0,0,guardian_api
 sublime|holden,The Sublime: Poems,Jonathan Holden,,1996-10-20,,1,0,,0,0,0,0,nyt_api
 subliminal|mlodinow,Subliminal: The New Unconscious and What It Teaches Us,Leonard Mlodinow,,2014-01-24,,1,1,4.0,1,0,0,0,guardian_api
@@ -79076,7 +79063,7 @@ thousandacres|smiley,A Thousand Acres,Jane Smiley,,1991-10-31,,2,0,,0,0,0,0,nyt_
 thousandandoneghosts|dumas,The Thousand and One Ghosts,Alexandre Dumas,1849,2004-11-13,,3,3,3.333,1,2,0,0,complete_review
 thousandandonenightsofjeanmacaque|cloete,The Thousand And One Nights Of Jean Macaque,S Cloete,,1965-01-24,,2,0,,0,0,0,0,nyt_api
 thousandautumnsofjacobdezoetbydavidmitchellread|aris,"The Thousand Autumns of Jacob de Zoet, by David Mitchell, read",Jonathan Aris and Paula Wilcox,,2011-07-15,,1,1,4.0,1,0,0,0,guardian_api
-thousandautumnsofjacobdezoet|mitchell,The Thousand Autumns of Jacob de Zoet,David Mitchell,2010,2010-04-28,the-thousand-autumns-of-jacob-de-zoet,26,26,2.885,8,10,5,3,complete_review;independent
+thousandautumnsofjacobdezoet|mitchell,The Thousand Autumns of Jacob de Zoet,David Mitchell,2010,2010-04-28,the-thousand-autumns-of-jacob-de-zoet,25,25,2.84,7,10,5,3,complete_review;independent
 thousandbetrayals|pirro,A Thousand Betrayals,U Pirro,,1961-11-26,,1,0,,0,0,0,0,nyt_api
 thousandcranes|yasunari,Thousand Cranes,Kawabata Yasunari,1952,1959-02-22,,4,2,3.0,0,2,0,0,complete_review
 thousandcrimesofmingtsu|lin,The Thousand Crimes of Ming Tsu,Tom (1996- ) Lin,,2021-06-02,the-thousand-crimes-of-ming-tsu,1,0,,0,0,0,0,nyt_api
@@ -79546,7 +79533,6 @@ timelovememory|weiner,"Time, Love, Memory",Jonathan Weiner,,1999-05-02,,1,0,,0,0
 timelurchesonordaddywhatwillyoubewhenyougrowup|schoenstein,"Time Lurches On. Or, Daddy, What Will You Be When You Grow Up?",R Schoenstein,,1965-01-31,,1,0,,0,0,0,0,nyt_api
 timeofadam|cullinan,The Time Of Adam,Elizabeth Cullinan,,1971-02-07,,1,0,,0,0,0,0,nyt_api
 timeofangels|schonstein,A Time of Angels,Patricia Schonstein,,2003-10-18,,1,1,4.0,1,0,0,0,guardian_api
-timeofchange|brumberg,Time Of Change,Abraham Brumberg,,1990-08-12,,1,0,,0,0,0,0,nyt_api
 timeofchange|salisbury,A Time Of Change,Harrison E. Salisbury.,,1988-03-20,,1,0,,0,0,0,0,nyt_api
 timeofcherries|sanches,The Time of Cherries,Julia Sanches,,2024-05-01,,1,1,3.0,0,1,0,0,literary_review
 timeofdesecration|moravia,Time of Desecration,Alberto Moravia,1978,1979-08-24,,5,3,2.0,0,1,1,1,complete_review
@@ -79675,7 +79661,6 @@ tim|,Tim: The Official Biography of Avicii by Måns Mosesson (translated by Brad
 tinagogo|angell,Tina Gogo,Judie Angell,,1978-07-23,,1,0,,0,0,0,0,nyt_api
 tinamodotti|argenteri,Tina Modotti: Between Art and Revolution,Letizia Argenteri,,2015-05-20,,1,1,2.0,0,0,1,0,literary_review
 tinamodotti|constantine,Tina Modotti: A Fragile Life,Mildred Constantine,,1975-06-08,,1,0,,0,0,0,0,nyt_api
-tinamodotti|lippincott,Tina Modotti: Photographer and Revolutionary,Robin Lippincott,,1994-04-17,,1,0,,0,0,0,0,nyt_api
 tincanandotherpoems|smith,The Tin Can. And Other Poems,W J Smith,,1966-06-26,,1,0,,0,0,0,0,nyt_api
 tincantree|tyler,The Tin Can Tree,A Tyler,,1965-11-21,,2,0,,0,0,0,0,nyt_api
 tinderbox|fieseler,Tinderbox: The Untold Story of the Up Stairs Lounge Fire and the Rise of Gay Liberation,Robert W Fieseler,,2018-05-29,tinderbox-the-untold-story-of-the-up-stairs-lounge-fire-and-the-rise-of-gay-liberation,1,0,,0,0,0,0,nyt_api
@@ -85928,7 +85913,6 @@ whentheboughbreaks|hewlett,When The Bough Breaks,Sylvia Ann Hewlett,,1991-07-11,
 whentheboughbreaks|kluger,When The Bough Breaks,R Kluger,,1964-07-12,,1,0,,0,0,0,0,nyt_api
 whentheboyscameback|turner,When The Boys Came Back: Baseball And 1946,Frederick Turner,,1996-08-04,,1,0,,0,0,0,0,nyt_api
 whenthebulbulstoppedsinging|shehadeh,When the Bulbul Stopped Singing: A Diary of Ramallah Under Siege,Raja Shehadeh,,2003-05-03,,1,1,3.0,0,1,0,0,guardian_api
-whenthecatsaway|curtin,When The Cat's Away,Jack Curtin,,1988-10-09,,1,0,,0,0,0,0,nyt_api
 whenthecenterheld|illustrated,When the Center Held: Gerald Ford and the Rescue of the American Presidency,Donald Rumsfeld Illustrated.,,2018-06-26,,1,0,,0,0,0,0,nyt_api
 whenthecheeringstopped|smith,When The Cheering Stopped: The Last Years Of Woodrow Wilson,G Smith,,1964-03-04,,1,0,,0,0,0,0,nyt_api
 whentheclockbroke|buchanan,"When the Clock Broke: Con Men, Conspiracists, and How America Cracked Up in the Early 1990s",Patrick J Buchanan,,2024-06-12,,1,0,,0,0,0,0,nyt_api
@@ -87298,7 +87282,7 @@ winkingatthebrim|berkeley,Winking At The Brim,Molly Berkeley,,1967-10-08,,1,0,,0
 wink|harrell,Wink,Rob (Author) Harrell,,2020-06-06,,1,0,,0,0,0,0,nyt_api
 wink|harter,The Wink,Evelyn Harter,,1986-12-28,,1,0,,0,0,0,0,nyt_api
 winnerofthenationalbookaward|willett,Winner Of The National Book Award,Jincy Willett,,2003-09-25,,1,0,,0,0,0,0,nyt_api
-winnersandlosersbattlesretreatsgainslossesandruinsfromalongwar|emerson,"Winners And Losers. Battles, Retreats, Gains, Losses And Ruins From A Long War",Gloria Emerson,,1977-01-16,,2,0,,0,0,0,0,nyt_api
+winnersandlosersbattlesretreatsgainslossesandruinsfromalongwar|emerson,"Winners And Losers. Battles, Retreats, Gains, Losses And Ruins From A Long War",Gloria Emerson,,1977-01-16,,3,0,,0,0,0,0,nyt_api
 winnerstakeall|giridharadas,Winners Take All,Anand Giridharadas,,2018-08-20,winners-take-all,3,2,3.0,1,0,1,0,guardian_api;nyt_api
 winners|backman,The Winners,Fredrik (1981- ) Backman,,2022-10-04,the-winners,1,0,,0,0,0,0,nyt_api
 winners|cortazar,The Winners,Julio Cortazar,,1965-03-21,,2,0,,0,0,0,0,nyt_api
@@ -88102,7 +88086,6 @@ wordsforadeafdaughter|west,Words For A Deaf Daughter,Paul West,,1970-09-27,,1,0,
 wordsforthetaking|bowers,Words for the Taking,Neal Bowers,1997,1996-27-12,,3,1,4.0,1,0,0,0,complete_review
 wordsfromthewall|thorpe,Words from the Wall,Adam Thorpe,,2019-06-11,,1,1,4.0,1,0,0,0,guardian_api
 wordsincollision|ross,Words in Collision,Michael L. Ross,,2023-11-07,,1,1,3.0,0,1,0,0,tls
-wordsincommotion|cancogni,Words In Commotion: And Other Stories,Annapaola Cancogni,,1986-11-30,,1,0,,0,0,0,0,nyt_api
 wordsineverwrote|thynne,The Words I Never Wrote,Jane Thynne,2020,2019-11-15,the-words-i-never-wrote,1,1,3.0,0,1,0,0,kirkus
 wordsinmyhand|glasfurd,Words in My Hand,Guinevere Glasfurd,,2017-02-17,,1,1,4.0,1,0,0,0,guardian_api
 wordsinthemourningtime|hayden,Words In The Mourning Time,Robert Hayden,,1971-01-24,,2,0,,0,0,0,0,nyt_api
