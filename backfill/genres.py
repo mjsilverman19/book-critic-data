@@ -144,6 +144,12 @@ if LRX is not None:
             sig[k].append(s_)
             if re.search(r'fiction|poetry',s_): form[k]['Poetry' if 'poetry' in s_ else 'Fiction']+=2
             else: form[k]['Nonfiction']+=1
+if os.path.exists('extra_hns.parquet'):
+    H=pd.read_parquet('extra_hns.parquet')
+    for k,g in zip(H.book_key,H.genres_hns.fillna('')):
+        g=g.replace('-',' ')
+        if 'non fiction' in g or 'nonfiction' in g: form[k]['Nonfiction']+=3; sig[k].append(g)
+        else: form[k]['Fiction']+=3; sig[k].append(g+' historical fiction')
 KX=pd.read_parquet('extra_kirkus.parquet') if os.path.exists('extra_kirkus.parquet') else None
 kg=pd.read_csv(f'{ROOT}/data/backfill/kirkus/reviews.csv.gz') if os.path.exists(f'{ROOT}/data/backfill/kirkus/reviews.csv.gz') else None
 if KX is not None and kg is not None:

@@ -29,6 +29,34 @@ for p in sorted(_g.glob('extra_*.parquet')):
     X['also_in_complete_review']=[(b,o) in crk for b,o in zip(X.book_key,X.outlet_key)]
     A=pd.concat([A,X],ignore_index=True)
     print('added',p,len(X))
+# ---- clean-up rules that apply to every source ----
+n0=len(A)
+crit=A.critic.fillna('').map(lambda c: na(c) if c else '')
+auth=A.book_key.fillna('|').str.split('|').str[1]
+# a reviewer's own book named in a bio line or column footer is not the book under review
+own=(crit!='')&(crit==auth)&A.source.isin(['guardian_api','nyt_api','tls','independent','literary_review'])
+# letters, guest columns and other non-review pieces that older archives tag with a book
+junk=A.review_url.fillna('').str.contains(r'letters?-to-the-editor|/letters/|guest-word|editors-choice|best-sellers|paperback-row|new-noteworthy|notable-books|book-of-a-lifetime', regex=True) | (A.source.eq('guardian_api') & A.book_key.fillna('').str.endswith('|') & A.title.fillna('').str.contains(r"[’']s ", regex=True)) \
+     | A.critic.fillna('').str.contains(r'Letters|New York City$|; ', regex=True)
+A=A[~own & ~junk].copy()
+# the same review published under several URLs, or the same critic on the same book in the same outlet and month
+A['_k']=A.book_key.fillna('')+'#'+A.outlet.fillna('').map(okey)+'#'+A.critic.fillna('').map(lambda c: na(c) if c else '')+'#'+A.review_date.fillna('').astype(str).str[:7]
+A=A[(A.book_key.isna())|~A.duplicated('_k')].drop(columns=['_k'])
+print('clean-up removed',n0-len(A),'rows: own-book',int(own.sum()),'non-review pieces',int(junk.sum()))
+# ---- clean-up rules that apply to every source ----
+n0=len(A)
+crit=A.critic.fillna('').map(lambda c: na(c) if c else '')
+auth=A.book_key.fillna('|').str.split('|').str[1]
+# a reviewer's own book named in a bio line or column footer is not the book under review
+own=(crit!='')&(crit==auth)&A.source.isin(['guardian_api','nyt_api','tls','independent','literary_review'])
+# letters, guest columns and other non-review pieces that older archives tag with a book
+junk=A.review_url.fillna('').str.contains(r'letters?-to-the-editor|/letters/|guest-word|best-sellers|paperback-row|new-noteworthy|notable-books', regex=True) \
+     | A.critic.fillna('').str.contains(r'Letters|New York City$|; ', regex=True)
+A=A[~own & ~junk].copy()
+# the same review published under several URLs, or the same critic on the same book in the same outlet and month
+A['_k']=A.book_key.fillna('')+'#'+A.outlet.fillna('').map(okey)+'#'+A.critic.fillna('').map(lambda c: na(c) if c else '')+'#'+A.review_date.fillna('').astype(str).str[:7]
+A=A[(A.book_key.isna())|~A.duplicated('_k')].drop(columns=['_k'])
+print('clean-up removed',n0-len(A),'rows: own-book',int(own.sum()),'non-review pieces',int(junk.sum()))
 A['rating_value']=A.rating_value.astype('Int64'); A['rating_label']=A.rating_value.map(LAB)
 A['predicted_value']=pd.to_numeric(A.predicted_value,errors='coerce').round(3)
 A.loc[A.critic.astype(str).str.strip().isin(['.','-','n.a.','']),'critic']=None

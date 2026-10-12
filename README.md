@@ -177,7 +177,7 @@ adjusted = (n * mean_score + 10 * 3.27) / (n + 10)
 | Literary Review (public WordPress API) | Reviews from 2015 on, with the book and its author from each review page (7,554 rows) | Predicted from the full text (0.61 correlation on 63 labeled reviews) |
 | The Arts Desk | Star-rated book reviews (480 rows) | The site's own five-star rating: 4 or 5 stars rave, 3 positive, 2 mixed, 1 pan |
 | Kirkus Reviews | A crawl that walks Kirkus review pages at the site's requested 10-second delay, run every six hours by `.github/workflows/kirkus.yml`; it adds about 8,000 pages a day | Starred reviews are raves; others are rated from the review's closing sentence by the quote model |
-| TLS (the-tls.com public API) | Times Literary Supplement reviews, 2015 onward, matched to books by the titles they italicize and the reviewer's slug (18,570 rows from 12,128 reviews; a review of several books gives a row per book) | Predicted from the full text by the Guardian-trained model (0.57 correlation with Book Marks labels on 363 TLS reviews) |
+| TLS (the-tls.com public API) | Times Literary Supplement book reviews, mostly 2020 onward. Only articles TLS marks as book reviews are used, and the book (or books) under review are read from the review's URL, which names title and author (5,135 rows) | Predicted from the full text by the Guardian-trained model (0.57 correlation with Book Marks labels on 192 TLS reviews) |
 
 ### Files
 
@@ -208,6 +208,10 @@ The review files follow the main reviews schema where it can and adds:
 | `also_in_complete_review` | A Guardian or NYT review that Complete Review also lists (1,404 rows). Drop these rows to avoid counting a review twice |
 | `pull_quote` | Complete Review's quote, the Guardian standfirst, or the NYT abstract. No full review text is stored |
 | `review_url`, `source_url` | The review itself, and the page it was found on |
+
+### Clean-up
+
+Rules applied to every source before export: a review whose named author matches its critic is dropped (a bio line such as "Jane Smiley's *13 Ways of Looking at the Novel* is published by..." names the columnist's own book, not the book under review); letters to the editor, guest columns, bestseller lists and "Book of a lifetime" pieces are dropped; and the same critic on the same book in the same outlet and month counts once, which removes reviews the Independent republished under several URLs. Together these remove about 7,400 rows.
 
 ### How ratings were made
 
