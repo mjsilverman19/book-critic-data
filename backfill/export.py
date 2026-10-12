@@ -32,7 +32,7 @@ for p in sorted(_g.glob('extra_*.parquet')):
 # ---- critic names: strip byline boilerplate ----
 def clean_critic(c):
     if not isinstance(c,str): return None
-    c=re.sub(r'Special to (?:The|the) New York Times','',c)
+    c=re.sub(r'Special to the New York Times','',c,flags=re.I)
     c=re.sub(r'^\s*(?:Reviews?|Reviewed|Reviewd|Reviewe)\s*(?:by)?\b[\s,:]*','',c,flags=re.I)
     c=re.sub(r'^\s*By\s+','',c,flags=re.I).strip(' ,;')
     return c or None
