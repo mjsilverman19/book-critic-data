@@ -579,12 +579,9 @@ function spread(d) {
 let homeReq = null;
 const homeData = () => homeReq ??= fetch('data/home.json').then(r => { if (!r.ok) throw new Error('home.json'); return r.json(); })
   .catch(error => { homeReq = null; throw error; });
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const shortDate = d => d ? `${MONTHS[+d.slice(5, 7) - 1]} ${+d.slice(8, 10)}` : '';
 const shortTitle = t => String(t).split(/:\s/)[0];
 const plural = (n, w) => `${int(n)} ${w}${n === 1 ? '' : 's'}`;
 const distBar = d => `<span class="dist" aria-hidden="true">${d.map((x, j) => x ? `<i class="s${4 - j}" style="flex:${x} 1 0"></i>` : '').join('')}</span>`;
-const SCORES_URL = 'https://github.com/mjsilverman19/book-critic-data#ranking-note';
 
 function homePage(h) {
   const Y = h.year, min = h.min, thisYear = Y === new Date().getFullYear();
@@ -615,12 +612,12 @@ function homePage(h) {
   <div class="try"><span>Try:</span>${tryLink('Piranesi', '#/book/piranesi')}${tryLink('Colson Whitehead', href('books', '', { a: 'Colson Whitehead' }))}${tryLink('James Wood', '#/critic/' + enc('James Wood'))}${tryLink('The New Yorker', '#/outlet/' + enc('The New Yorker'))}</div>
 </div>
 <section>
-  <div class="sh"><h2>Recently reviewed</h2><span class="d"><span>Updated daily · Last updated ${shortDate(h.updated)}</span><a href="${href('books', '', { s: 'added' })}">View all recently reviewed books →</a></span></div>
+  <div class="sh"><h2>Recently reviewed</h2><span class="d"><a href="${href('books', '', { s: 'added' })}">View all recently reviewed books →</a></span></div>
   <div class="covers">${recent}</div>
   <div class="legend"><span><i class="s4"></i>Rave</span><span><i class="s3"></i>Positive</span><span><i class="s2"></i>Mixed</span><span><i class="s1"></i>Pan</span></div>
 </section>
 <div class="lists">
-${list(`Most acclaimed books of ${Y}`, `Highest adjusted scores among books published in ${Y} with at least ${min} reviews · <a href="${SCORES_URL}" target="_blank" rel="noopener">How scores are calculated</a>`,
+${list(`Most acclaimed books of ${Y}`, `Highest adjusted scores among books published in ${Y} with at least ${min} reviews`,
   `View all ${Y} books by score`, href('books', '', { y: Y, min }), h.acclaimed, b => [f2(b.adj), plural(b.n, 'review')])}
 ${list(`Most divisive books of ${Y}`, `Widest spread of critics’ verdicts among books published in ${Y} with at least ${min} reviews`,
   `View all ${Y} books by disagreement`, href('books', '', { y: Y, min, s: 'spread' }), h.divisive, b => [plural(b.dist[0], 'rave'), plural(b.dist[3], 'pan')])}
