@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Book Critic Data</title>
 <style>
-:root { --fg: #111; --dim: #888; --line: #e6e6e6; --bg: #fff; }
-@media (prefers-color-scheme: dark) { :root { --fg: #e8e8e8; --dim: #777; --line: #262626; --bg: #111; } }
+:root { --fg: #111; --dim: #6b6b6b; --soft: #444; --line: #e6e6e6; --bg: #fff; --off: #b0b0b0;
+  --rave: #111; --pos: #6b6b6b; --mix: #b8b8b8; --pan: #e2e2e2; --pan-edge: #cfcfcf; --fill: #f2f2f2; }
+@media (prefers-color-scheme: dark) { :root { --fg: #e8e8e8; --dim: #8f8f8f; --soft: #bdbdbd; --line: #262626; --bg: #111; --off: #555;
+  --rave: #ececec; --pos: #a3a3a3; --mix: #616161; --pan: #333; --pan-edge: #4a4a4a; --fill: #1d1d1d; } }
 * { box-sizing: border-box; }
 html { background: var(--bg); color: var(--fg); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body { margin: 0 auto; max-width: 1440px; padding: 32px 24px 96px; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif; }
@@ -15,6 +17,7 @@ a:hover { text-decoration: underline; }
 nav { display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; margin-bottom: 24px; }
 nav a { color: var(--dim); }
 nav a.on { color: var(--fg); }
+nav a.brand { color: var(--fg); font-weight: 600; margin-right: 12px; }
 nav .n { margin-left: auto; color: var(--dim); font-variant-numeric: tabular-nums; }
 .bar { display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap; border-bottom: 1px solid var(--fg); }
 input, select { font: inherit; color: inherit; background: none; border: 0; outline: 0; padding: 6px 0; margin: 0; }
@@ -50,7 +53,87 @@ h1 { font-size: 20px; font-weight: normal; margin: 0 0 2px; }
 .rev .h { color: var(--dim); }
 .rev .h b { font-weight: normal; color: var(--fg); }
 .rev p { margin: 4px 0 0; max-width: 680px; }
-#more { height: 1px; }
+.status { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 10px 0 0; color: var(--dim); font-variant-numeric: tabular-nums; }
+.status b, .pager b { font-weight: normal; color: var(--fg); }
+.pager { border-top: 1px solid var(--fg); margin-top: 8px; padding-top: 16px; display: flex; flex-wrap: wrap; gap: 12px 16px;
+  align-items: center; justify-content: space-between; font-variant-numeric: tabular-nums; }
+.pager .pages { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pager button { font: inherit; color: var(--fg); background: none; border: 0; border-radius: 2px; cursor: pointer;
+  min-width: 36px; min-height: 36px; padding: 0 8px; }
+.pager button:hover:not(:disabled):not(.cur) { text-decoration: underline; }
+.pager button.cur { background: var(--fg); color: var(--bg); cursor: default; }
+.pager button:disabled { color: var(--off); cursor: default; }
+.pager .gap { min-width: 24px; text-align: center; color: var(--dim); }
+.pager .mpage { display: none; align-items: center; gap: 6px; color: var(--dim); }
+.pager .mpage input { width: 3.5em; text-align: center; color: var(--fg); border: 1px solid var(--pan-edge); border-radius: 2px; padding: 6px 2px;
+  -moz-appearance: textfield; }
+.pager .mpage input::-webkit-inner-spin-button, .pager .mpage input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.pager .per { color: var(--dim); }
+.pager .per select { color: var(--fg); margin-left: 6px; }
+.dist { display: flex; height: 6px; gap: 1px; }
+.dist i { display: block; min-width: 2px; }
+.s4 { background: var(--rave); } .s3 { background: var(--pos); } .s2 { background: var(--mix); } .s1 { background: var(--pan); }
+#home { padding-top: 48px; }
+#home .hero { max-width: 760px; margin-bottom: 64px; }
+#home h1 { font-size: 44px; line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 18px; }
+#home .lede { font-size: 18px; color: var(--soft); margin: 0 0 32px; max-width: 640px; }
+#home label.lab { display: block; font-size: 12px; color: var(--dim); margin-bottom: 2px; }
+#home .search { display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--fg); }
+#home .search svg { flex: none; }
+#home .search input { flex: 1; min-width: 0; font-size: 20px; padding: 12px 0; }
+#home .try { display: flex; gap: 6px 16px; flex-wrap: wrap; margin-top: 12px; color: var(--dim); }
+#home .try a { color: var(--fg); }
+#hits { margin-top: 4px; }
+#hits:empty { display: none; }
+#hits .grp { padding: 10px 0 4px; color: var(--dim); font-size: 12px; }
+#hits a { display: flex; justify-content: space-between; gap: 16px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+#hits a span { color: var(--dim); white-space: nowrap; }
+#hits a.on { text-decoration: underline; }
+#home section { margin-bottom: 72px; }
+#home .sh { display: flex; align-items: baseline; justify-content: space-between; gap: 6px 16px; flex-wrap: wrap;
+  border-bottom: 1px solid var(--fg); padding-bottom: 8px; margin-bottom: 20px; }
+#home h2 { font-size: 14px; font-weight: 600; margin: 0; }
+#home .sh .d { display: flex; gap: 6px 20px; flex-wrap: wrap; }
+#home .sh .d a { color: var(--fg); }
+.covers { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 28px 20px; }
+.covers a { display: block; }
+.covers a:hover { text-decoration: none; }
+.covers a:hover .t { text-decoration: underline; }
+.covers .img { display: block; width: 100%; aspect-ratio: 2 / 3; background: var(--fill); border-radius: 2px; margin-bottom: 10px; overflow: hidden; }
+.covers img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.covers .t { font-weight: 500; line-height: 1.3; }
+.covers .a { color: var(--dim); line-height: 1.3; margin-bottom: 8px; }
+.covers .dist { margin-bottom: 6px; }
+.covers .v { font-size: 13px; color: var(--dim); }
+.covers .v b { font-weight: normal; color: var(--fg); text-transform: capitalize; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px; font-size: 12px; color: var(--dim); }
+.legend span { display: flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; }
+.legend .s1 { box-shadow: inset 0 0 0 1px var(--pan-edge); }
+.lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 48px; }
+#home .lists section { margin: 0; }
+#home .lists .sh { display: block; margin-bottom: 4px; }
+#home .lists .sub { display: block; color: var(--dim); font-size: 13px; }
+#home .lists .sub a { color: var(--fg); }
+.rank { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 12px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.rank:hover { text-decoration: none; }
+.rank:hover .t { text-decoration: underline; }
+.rank .i { color: var(--dim); font-variant-numeric: tabular-nums; }
+.rank .t { display: block; font-weight: 500; line-height: 1.3; }
+.rank .a { display: block; color: var(--dim); line-height: 1.3; margin-bottom: 7px; }
+.rank .dist { height: 5px; max-width: 180px; }
+.rank .st { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rank .st span { display: block; color: var(--dim); font-size: 12px; }
+.lists .all { display: inline-flex; align-items: center; min-height: 44px; }
+.cta { border-top: 1px solid var(--fg); padding-top: 32px; display: flex; flex-wrap: wrap; gap: 24px 64px; align-items: flex-start; justify-content: space-between; }
+#home .cta h2.big { font-size: 24px; font-weight: normal; letter-spacing: -0.01em; margin: 0 0 10px; }
+.cta p { font-size: 16px; color: var(--soft); margin: 0; max-width: 620px; }
+a.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 22px; background: var(--fg); color: var(--bg); border-radius: 2px; }
+a.btn:hover { text-decoration: none; opacity: .85; }
+h2.sec.first { margin-top: 24px; }
+.starter { columns: 2 420px; column-gap: 48px; margin-bottom: 40px; }
+.starter > div { break-inside: avoid; display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 6px 0; border-top: 1px solid var(--line); }
+.starter select { flex: none; }
 .empty { color: var(--dim); padding: 24px 0; }
 .empty a { color: var(--fg); }
 button.tx { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
@@ -90,12 +173,37 @@ html.cover-open { overflow: hidden; }
   td.list { min-width: 240px; white-space: normal; }
   th:first-child, td:first-child { position: sticky; left: 0; background: var(--bg); z-index: 1; }
   .scroll { margin-right: -16px; padding-right: 16px; }
+  nav a.brand { flex-basis: 100%; font-size: 15px; margin: 0; }
+  nav { gap: 8px 16px; }
+  #home { padding-top: 16px; }
+  #home .hero { margin-bottom: 44px; }
+  #home h1 { font-size: 30px; line-height: 1.12; margin-bottom: 14px; }
+  #home .lede { font-size: 15px; margin-bottom: 24px; }
+  #home .search input { font-size: 17px; padding: 11px 0; }
+  #home section { margin-bottom: 48px; }
+  .covers { display: flex; overflow-x: auto; gap: 14px; margin-right: -16px; padding-right: 16px; padding-bottom: 4px; }
+  .covers a { flex: 0 0 112px; }
+  .covers .dist { height: 5px; }
+  .lists { gap: 40px; }
+  .cta { padding-top: 24px; }
+  #home .cta h2.big { font-size: 20px; }
+  .cta p { font-size: 14px; }
+  .cta a.btn { flex: 1 1 100%; min-height: 48px; }
+  .pager { justify-content: center; }
+  .pager .range { flex-basis: 100%; text-align: center; }
+  .pager .pages { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); flex-wrap: nowrap; }
+  .pager .pages .num, .pager .pages .gap, .pager .per { display: none; }
+  .pager .mpage { display: flex; }
+  .pager .prev { justify-self: start; min-height: 48px; padding: 0; }
+  .pager .next { justify-self: end; min-height: 48px; padding: 0; font-weight: 500; }
 }
 </style>
 <link rel="stylesheet" href="preview.css">
 </head>
 <body>
 <nav>
+  <a href="#/" class="brand">Book Critic Data</a>
+  <a href="#/" data-v="home">Home</a>
   <a href="#/books" data-v="books">Books</a>
   <a href="#/critics" data-v="critics">Critics</a>
   <a href="#/authors" data-v="authors">Authors</a>
@@ -119,7 +227,6 @@ html.cover-open { overflow: hidden; }
   <div class="chips" id="chips"></div>
 </div>
 <div id="out"><p class="empty">Loading…</p></div>
-<div id="more"></div>
 <div id="below"></div>
 
 <script>
@@ -198,11 +305,14 @@ function aggregate(src) {
   for (const a of A) { a.mean = a.rn ? a.sum / a.rn : null; a.adj = a.rn ? (a.sum + 10 * 3.27) / (a.rn + 10) : null; }
 }
 
+let ready = false;
 async function load() {
+  // the home page paints from the small home.json while the full data loads behind it
+  if (parse().view === 'home') { frame('home'); V.home(); }
   const [books, idx] = await Promise.all(['books', 'index'].map(f => fetch(`data/${f}.json`).then(r => r.json())));
   shards = idx.shards;
-  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn, overall, bf]) => ({
-    slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, overall, bf: !!bf,
+  B = books.map(([slug, title, author, pub, date, genres, dist, mean, adj, isbn, overall, bf, added]) => ({
+    slug, title, author, pub, date, year: date ? +date.slice(0, 4) : null, genres, overall, bf: !!bf, added: added || '',
     ov: { rave: 4, positive: 3, mixed: 2, pan: 1 }[overall] ?? null,
     hay: fold([title, author, pub, isbn].join(' ')),
   }));
@@ -224,6 +334,7 @@ async function load() {
     .map(p => `<option value="${esc(p)}">${esc(p)} (${int(pc[p])})</option>`).join(''));
   const years = [...new Set(B.map(b => b.year).filter(Boolean))].sort((a, b) => b - a);
   $('#y').insertAdjacentHTML('beforeend', years.map(y => `<option>${y}</option>`).join(''));
+  ready = true;
   route();
 }
 
@@ -231,9 +342,9 @@ async function load() {
 let S = {};
 function parse() {
   const [path, qs = ''] = location.hash.slice(1).split('?');
-  const [, view = 'books', ...rest] = path.split('/');
+  const [, view = 'home', ...rest] = path.split('/');
   const p = new URLSearchParams(qs);
-  return { view: V[view] ? view : 'books', arg: rest.length ? decodeURIComponent(rest.join('/')) : '', p };
+  return { view: V[view] ? view : 'home', arg: rest.length ? decodeURIComponent(rest.join('/')) : '', p };
 }
 function href(view, arg = '', params = {}) {
   const p = new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '' && v != null));
@@ -241,21 +352,27 @@ function href(view, arg = '', params = {}) {
 }
 function sync() {
   const t = T || {};
-  const params = { q: S.q, g: S.g, y: S.y, a: S.a, p: S.p, src: S.src, min: S.min != t.defMin ? S.min : '', s: t.sort !== t.defSort ? t.sort : '', d: t.dir !== t.defDir ? t.dir : '' };
+  const params = { q: S.q, g: S.g, y: S.y, a: S.a, p: S.p, src: S.src, min: S.min != t.defMin ? S.min : '', s: t.sort !== t.defSort ? t.sort : '', d: t.dir !== t.defDir ? t.dir : '',
+    per: t.per && t.per !== PER[0] ? t.per : '', pg: t.page > 1 ? t.page : '' };
   history.replaceState(null, '', href(S.view, S.arg, params));
 }
 
 // ---- table ----
+// One page of rows at a time. The page and page size live in the URL (pg, per) with the filters, so the back
+// button and shared links return to the same page. Sorts listed in def.extra have no column of their own.
+const PER = [50, 100, 250];
 let T = null;
 function table(cols, rows, def) {
-  const p = S.params;
-  const sort = p.get('s') && cols.some(c => c.k === p.get('s')) ? p.get('s') : def.sort;
+  const p = S.params, extra = def.extra || {};
+  const want = p.get('s');
+  const sort = want && (cols.some(c => c.k === want) || extra[want]) ? want : def.sort;
   const col = cols.find(c => c.k === sort);
-  T = { cols, rows, noun: def.noun, name: def.name, empty: def.empty, sort, defSort: def.sort, defDir: -1, defMin: def.min,
-        dir: p.get('d') ? +p.get('d') : (sort === def.sort ? -1 : col.num ? -1 : 1), shown: 0 };
+  T = { cols, rows, extra, noun: def.noun, name: def.name, empty: def.empty, sort, defSort: def.sort, defDir: -1, defMin: def.min,
+        dir: p.get('d') ? +p.get('d') : (sort === def.sort || !col ? -1 : col.num ? -1 : 1),
+        per: PER.includes(+p.get('per')) ? +p.get('per') : PER[0], page: Math.max(1, parseInt(p.get('pg'), 10) || 1) };
   S.min = p.get('min') || def.min;
   $('#min').value = S.min;
-  draw();
+  draw(false);
 }
 function filtered() {
   const terms = fold(S.q).split(/\s+/).filter(Boolean);
@@ -265,7 +382,7 @@ function filtered() {
     && (!S.g || r.genres?.includes(S.g)) && (!y || r.year === y)
     && (!S.a || r.aut === S.a) && (!S.p || r.pub === S.p)
     && terms.every(t => r.hay.includes(t)));
-  const get = col.v || (r => r[col.k]);
+  const get = col ? col.v || (r => r[col.k]) : T.extra[T.sort].v;
   rows.sort((a, b) => {
     const x = get(a), z = get(b);
     if (x == null || x === '') return 1; if (z == null || z === '') return -1;
@@ -273,31 +390,72 @@ function filtered() {
   });
   return rows;
 }
-function draw() {
-  T.view = filtered(); T.shown = 0;
+// draw() refilters and resorts, returning to page 1 unless told to keep the page from the URL
+function draw(reset = true) {
+  T.view = filtered();
+  if (reset) T.page = 1;
+  T.pages = Math.max(1, Math.ceil(T.view.length / T.per));
+  T.page = Math.min(T.page, T.pages);
   const h = T.cols.map(c => `<th class="${c.num ? 'r ' : ''}${c.cls || ''}${c.k === T.sort ? ' on' : ''}" data-k="${c.k}"${c.tip ? ` title="${esc(c.tip)}"` : ''}>${c.label}${c.k === T.sort ? (T.dir > 0 ? ' ↑' : ' ↓') : ''}</th>`).join('');
-  $('#out').innerHTML = T.view.length ? `<div class="scroll"><table><thead><tr>${h}</tr></thead><tbody></tbody></table></div>` : `<p class="empty">${T.empty ? T.empty() : 'No matches'}</p>`;
+  $('#out').innerHTML = T.view.length
+    ? `<div class="status"></div><div class="scroll"><table><thead><tr>${h}</tr></thead><tbody></tbody></table></div><nav class="pager" aria-label="Pages"></nav>`
+    : `<p class="empty">${T.empty ? T.empty() : 'No matches'}</p>`;
   const reviewCount = T.noun === 'reviews' ? '' : ' · ' + int(T.view.reduce((sum, row) => sum + row.n, 0)) + ' reviews';
   $('#count').textContent = int(T.view.length) + ' ' + T.noun + reviewCount;
-  chips(); sync(); more();
+  chips(); paint();
 }
-function more() {
-  const tb = $('#out tbody'); if (!tb || T.shown >= T.view.length) return;
-  const end = Math.min(T.shown + 150, T.view.length);
-  tb.insertAdjacentHTML('beforeend', T.view.slice(T.shown, end).map(r =>
-    `<tr>${T.cols.map(c => `<td class="${c.num ? 'r ' : ''}${c.cls || ''}">${c.f ? c.f(r) : esc(r[c.k])}</td>`).join('')}</tr>`).join(''));
-  T.shown = end;
+// paint() renders the current page into the table drawn above
+function paint() {
+  sync();
+  const tb = $('#out tbody'); if (!tb) return;
+  const start = (T.page - 1) * T.per, end = Math.min(start + T.per, T.view.length);
+  tb.innerHTML = T.view.slice(start, end).map(r =>
+    `<tr>${T.cols.map(c => `<td class="${c.num ? 'r ' : ''}${c.cls || ''}">${c.f ? c.f(r) : esc(r[c.k])}</td>`).join('')}</tr>`).join('');
+  const range = `Showing <b>${int(start + 1)}–${int(end)}</b> of ${int(T.view.length)} ${T.noun}`;
+  $('#out .status').innerHTML = `<span>${range}</span>${T.pages > 1 ? `<span>Page ${int(T.page)} of ${int(T.pages)}</span>` : ''}`;
+  $('#out .pager').innerHTML = pager(range);
+}
+function pager(range) {
+  const { page, pages } = T;
+  let nums = '', last = 0;
+  if (pages > 1) {
+    const show = new Set([1, pages]);
+    for (let i = page - 2; i <= page + 2; i++) if (i >= 1 && i <= pages) show.add(i);
+    for (const n of [...show].sort((a, b) => a - b)) {
+      if (n - last > 1) nums += '<span class="gap">…</span>';
+      nums += n === page ? `<button type="button" class="num cur" aria-current="page">${int(n)}</button>`
+        : `<button type="button" class="num" data-pg="${n}" aria-label="Page ${n}">${int(n)}</button>`;
+      last = n;
+    }
+  }
+  const pages_ = pages > 1 ? `<span class="pages">`
+    + `<button type="button" class="prev" data-pg="${page - 1}"${page === 1 ? ' disabled' : ''}>← Previous</button>${nums}`
+    + `<label class="mpage">Page <input type="number" inputmode="numeric" min="1" max="${pages}" value="${page}" aria-label="Page number" data-pgin> of ${int(pages)}</label>`
+    + `<button type="button" class="next" data-pg="${page + 1}"${page === pages ? ' disabled' : ''}>Next →</button></span>` : '';
+  const per = T.view.length > PER[0]
+    ? `<label class="per">Rows per page<select data-per>${PER.map(n => `<option${n === T.per ? ' selected' : ''}>${n}</option>`).join('')}</select></label>` : '';
+  return `<span class="range">${range}</span>${pages_}${per}`;
+}
+function go(n) {
+  T.page = Math.min(Math.max(1, n || 1), T.pages);
+  paint();
+  const top = $('#out').getBoundingClientRect().top + scrollY - 16;
+  if (scrollY > top) window.scrollTo(0, top);
 }
 function chips() {
   const set = [['a', 'Author']].filter(([k]) => S[k]);
-  $('#chips').innerHTML = set.map(([k, l]) => `<a href="#" data-clear="${k}">${l}: <b>${esc(S[k])}</b> ×</a>`).join('');
+  const ex = T.extra[T.sort];
+  $('#chips').innerHTML = set.map(([k, l]) => `<a href="#" data-clear="${k}">${l}: <b>${esc(S[k])}</b> ×</a>`).join('')
+    + (ex ? `<a href="#" data-clear="sort">Sorted by <b>${esc(ex.label)}</b> ×</a>` : '');
   if (S.p && ![...$('#p').options].some(o => o.value === S.p)) $('#p').add(new Option(S.p, S.p));
   for (const k of ['g', 'p', 'y']) { $('#' + k).value = S[k]; $('#' + k).classList.toggle('set', !!S[k]); }
 }
 
-new IntersectionObserver(e => e[0].isIntersecting && T && more(), { rootMargin: '800px' }).observe($('#more'));
 $('#out').addEventListener('click', e => {
+  const pg = e.target.closest('[data-pg]');
+  if (pg && T) return go(+pg.dataset.pg);
   const th = e.target.closest('th');
+  if (th && !th.dataset.k) return;
   if (th) {
     const col = T.cols.find(c => c.k === th.dataset.k);
     if (T.sort === col.k) T.dir = -T.dir; else { T.sort = col.k; T.dir = col.num ? -1 : 1; }
@@ -306,7 +464,23 @@ $('#out').addEventListener('click', e => {
   const f = e.target.closest('[data-fk]');
   if (f) { S[f.dataset.fk] = f.dataset.fv; draw(); window.scrollTo(0, 0); }
 });
-$('#chips').addEventListener('click', e => { const a = e.target.closest('[data-clear]'); if (a) { e.preventDefault(); S[a.dataset.clear] = ''; draw(); } });
+$('#out').addEventListener('change', e => {
+  if (!T) return;
+  if (e.target.matches('[data-per]')) {
+    const first = (T.page - 1) * T.per;
+    T.per = +e.target.value;
+    T.pages = Math.max(1, Math.ceil(T.view.length / T.per));
+    go(Math.floor(first / T.per) + 1);
+  }
+  if (e.target.matches('[data-pgin]')) go(parseInt(e.target.value, 10));
+});
+$('#out').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('[data-pgin]')) e.target.blur(); });
+$('#chips').addEventListener('click', e => {
+  const a = e.target.closest('[data-clear]'); if (!a) return;
+  e.preventDefault();
+  if (a.dataset.clear === 'sort') { T.sort = T.defSort; T.dir = T.defDir; } else S[a.dataset.clear] = '';
+  draw();
+});
 let tm; $('#q').addEventListener('input', () => { clearTimeout(tm); tm = setTimeout(() => { S.q = $('#q').value; draw(); }, 80); });
 $('#g').addEventListener('change', () => { S.g = $('#g').value; draw(); });
 $('#y').addEventListener('change', () => { S.y = $('#y').value; draw(); });
@@ -337,7 +511,18 @@ const V = {
       ...counts(),
       { k: 'mean', label: 'Mean', num: 1, f: r => f2(r.mean) },
       { k: 'adj', label: 'Adjusted', num: 1, tip: TIP.adj, f: r => f2(r.adj) },
-    ], B, { sort: 'adj', noun: 'books', min: 1 });
+    ], B, { sort: 'adj', noun: 'books', min: 1, extra: {
+      added: { label: 'most recently reviewed', v: r => r.added || null },
+      spread: { label: 'widest disagreement', v: r => r.cnt >= 2 ? spread(r.dist) : null },
+    } });
+  },
+  async home() {
+    $('#count').textContent = '';
+    const h = await homeData().catch(() => null);
+    if (parse().view !== 'home') return;
+    if (!h) return $('#out').innerHTML = `<p class="empty">The home page could not load. <a href="#/books">Browse all books</a></p>`;
+    if (!$('#home')) $('#out').innerHTML = homePage(h);
+    hits();
   },
   critics() {
     table([
@@ -383,6 +568,101 @@ const V = {
     $('#out').innerHTML = d.r.filter(([, , , , , , src]) => !S.src || (S.src === 'bm' ? !src : src)).map(([, v, c, o, url, q, src, date]) => `<div class="rev"><div class="h"><b>${LABEL[v] || 'review'}</b>${date ? ' · ' + esc(date) : ''} · ${c ? cLink(cByName[c]) : 'Unsigned'}${o ? ', ' + oLink(oByName[o]) : ''}${url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener">read ↗</a>` : ''}</div><p>${esc(q)}</p></div>`).join('') || '<p class="empty">No reviews</p>';
   },
 };
+
+// ---- home ----
+// spread: standard deviation of a book's ratings on the 1–4 scale, the measure behind "most divisive"
+function spread(d) {
+  const n = d[0] + d[1] + d[2] + d[3]; if (n < 2) return 0;
+  const m = (4 * d[0] + 3 * d[1] + 2 * d[2] + d[3]) / n;
+  return Math.sqrt(d.reduce((s, c, j) => s + c * (4 - j - m) ** 2, 0) / n);
+}
+let homeReq = null;
+const homeData = () => homeReq ??= fetch('data/home.json').then(r => { if (!r.ok) throw new Error('home.json'); return r.json(); })
+  .catch(error => { homeReq = null; throw error; });
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const shortDate = d => d ? `${MONTHS[+d.slice(5, 7) - 1]} ${+d.slice(8, 10)}` : '';
+const shortTitle = t => String(t).split(/:\s/)[0];
+const plural = (n, w) => `${int(n)} ${w}${n === 1 ? '' : 's'}`;
+const distBar = d => `<span class="dist" aria-hidden="true">${d.map((x, j) => x ? `<i class="s${4 - j}" style="flex:${x} 1 0"></i>` : '').join('')}</span>`;
+const SCORES_URL = 'https://github.com/mjsilverman19/book-critic-data#ranking-note';
+
+function homePage(h) {
+  const Y = h.year, min = h.min, thisYear = Y === new Date().getFullYear();
+  const cover = b => {
+    let src = '';
+    try { const u = new URL(b.cover); if (u.protocol === 'https:') src = u.href; } catch {}
+    return `<span class="img">${src ? `<img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}</span>`;
+  };
+  const recent = h.recent.map(b => `<a href="#/book/${enc(b.slug)}" data-book-preview="${esc(b.slug)}">${cover(b)}`
+    + `<div class="t">${esc(shortTitle(b.title))}</div><div class="a">${esc(baseAuthor(b.author))}</div>${distBar(b.dist)}`
+    + `<div class="v">${b.overall ? `<b>${esc(b.overall)}</b> · ` : ''}${plural(b.n, 'review')}</div></a>`).join('');
+  const list = (title, sub, more, moreHref, rows, stat) => `<section><div class="sh"><h2>${title}</h2><span class="sub">${sub}</span></div>`
+    + rows.map((b, i) => { const [s, l] = stat(b); return `<a class="rank" href="#/book/${enc(b.slug)}" data-book-preview="${esc(b.slug)}">`
+      + `<span class="i">${i + 1}</span><span><span class="t">${esc(shortTitle(b.title))}</span><span class="a">${esc(baseAuthor(b.author))}</span>${distBar(b.dist)}</span>`
+      + `<span class="st">${s}<span>${l}</span></span></a>`; }).join('')
+    + `<a class="all" href="${moreHref}">${more} →</a></section>`;
+  const tryLink = (text, link) => `<a href="${link}">${esc(text)}</a>`;
+  return `<div id="home">
+<div class="hero">
+  <h1>What the critics thought of ${int(h.totals.books)} books</h1>
+  <p class="lede">See where critics agree, where they disagree, and whose taste matches yours.</p>
+  <label class="lab" for="home-q">Search</label>
+  <div class="search">
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="color:var(--dim)"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="home-q" type="search" placeholder="Search by title, author, critic or outlet" autocomplete="off" spellcheck="false" enterkeyhint="search">
+  </div>
+  <div id="hits"></div>
+  <div class="try"><span>Try:</span>${tryLink('Piranesi', '#/book/piranesi')}${tryLink('Colson Whitehead', href('books', '', { a: 'Colson Whitehead' }))}${tryLink('James Wood', '#/critic/' + enc('James Wood'))}${tryLink('The New Yorker', '#/outlet/' + enc('The New Yorker'))}</div>
+</div>
+<section>
+  <div class="sh"><h2>Recently reviewed</h2><span class="d"><span>Updated daily · Last updated ${shortDate(h.updated)}</span><a href="${href('books', '', { s: 'added' })}">View all recently reviewed books →</a></span></div>
+  <div class="covers">${recent}</div>
+  <div class="legend"><span><i class="s4"></i>Rave</span><span><i class="s3"></i>Positive</span><span><i class="s2"></i>Mixed</span><span><i class="s1"></i>Pan</span></div>
+</section>
+<div class="lists">
+${list(`Most acclaimed books of ${Y}`, `Highest adjusted scores among books published in ${Y} with at least ${min} reviews · <a href="${SCORES_URL}" target="_blank" rel="noopener">How scores are calculated</a>`,
+  `View all ${Y} books by score`, href('books', '', { y: Y, min }), h.acclaimed, b => [f2(b.adj), plural(b.n, 'review')])}
+${list(`Most divisive books of ${Y}`, `Widest spread of critics’ verdicts among books published in ${Y} with at least ${min} reviews`,
+  `View all ${Y} books by disagreement`, href('books', '', { y: Y, min, s: 'spread' }), h.divisive, b => [plural(b.dist[0], 'rave'), plural(b.dist[3], 'pan')])}
+${list(thisYear ? 'Most reviewed this year' : `Most reviewed in ${Y}`, `Books with the most reviews published in ${Y}`,
+  `View all books by ${Y} review count`, href('books', '', { y: Y, s: 'n' }), h.reviewed, b => [int(b.n), 'reviews'])}
+</div>
+<section class="cta" style="margin-top:80px">
+  <div><h2 class="big">Find critics who share your taste</h2><p>Rate five books you’ve read to find critics whose verdicts match yours. Discover more books those critics loved.</p></div>
+  <a class="btn" href="#/shelf">Start rating</a>
+</section>
+</div>`;
+}
+
+// live search on the home page across books, authors, critics and outlets
+function hits() {
+  const box = $('#hits'), input = $('#home-q');
+  if (!box || !input) return;
+  const q = input.value.trim();
+  if (!q) return box.innerHTML = '';
+  if (!ready) return box.innerHTML = '<p class="empty">Loading the index…</p>';
+  const terms = fold(q).split(/\s+/).filter(Boolean);
+  const top = (rows, k) => rows.filter(x => x.n && terms.every(t => x.hay.includes(t))).sort((a, b) => b.n - a.n).slice(0, k);
+  const groups = [
+    ['Books', top(B, 6), b => [`#/book/${enc(b.slug)}`, `${esc(b.title)} <span>${esc(baseAuthor(b.author))}</span>`, b.slug]],
+    ['Authors', top(A, 3), a => [href('books', '', { a: a.name }), `${esc(a.name)} <span>${plural(a.books, 'book')}</span>`]],
+    ['Critics', top(C, 3), c => ['#/critic/' + enc(c.name), `${esc(c.name)} <span>${plural(c.n, 'review')}</span>`]],
+    ['Outlets', top(O, 3), o => ['#/outlet/' + enc(o.name), `${esc(o.name)} <span>${plural(o.n, 'review')}</span>`]],
+  ].filter(([, rows]) => rows.length);
+  const all = href('books', '', { q });
+  box.innerHTML = groups.length
+    ? groups.map(([label, rows, f]) => `<div class="grp">${label}</div>` + rows.map(x => { const [link, html, slug] = f(x);
+      return `<a href="${link}"${slug ? ` data-book-preview="${esc(slug)}"` : ''}>${html}</a>`; }).join('')).join('')
+      + `<a href="${all}">All matching books →<span></span></a>`
+    : `<p class="empty">No matches. <a href="${all}">Search all books</a></p>`;
+}
+let homeTimer;
+$('#out').addEventListener('input', e => { if (e.target.id === 'home-q') { clearTimeout(homeTimer); homeTimer = setTimeout(hits, 80); } });
+$('#out').addEventListener('keydown', e => {
+  if (e.target.id !== 'home-q' || e.key !== 'Enter') return;
+  const q = e.target.value.trim();
+  if (q) location.hash = href('books', '', { q });
+});
 
 function person(e, kind) {
   if (!e) return head('<h1>Not found</h1>');
@@ -439,23 +719,34 @@ function showBookCover(book, value) {
 
 function route() {
   if (coverDialog.open) coverDialog.close();
+  if (!ready) { // until the data arrives only the home page can draw; load() routes again when it is in
+    const v = parse().view;
+    frame(v);
+    if (v === 'home') V.home(); else { head(''); $('#out').innerHTML = '<p class="empty">Loading…</p>'; }
+    return;
+  }
   const { view, arg, p } = parse();
   S = { view, arg, params: p, q: p.get('q') || '', g: p.get('g') || '', y: p.get('y') || '', a: p.get('a') || '', p: p.get('p') || '', src: p.get('src') || '' };
   aggregate(S.src);
   $('#q').value = S.q;
   $('#q').placeholder = view === 'shelf' ? 'Search your books' : 'Search';
   T = null;
-  const listy = view !== 'book';
-  document.body.classList.toggle('book-page', !listy);
+  frame(view);
+  V[view](arg);
+}
+// page furniture that depends only on the view
+function frame(view) {
+  const listy = !['book', 'home'].includes(view);
+  document.body.classList.toggle('book-page', view === 'book');
   $('#book-cover').hidden = true;
   $('#book-cover').replaceChildren();
   $('#below').innerHTML = '';
-  $('#controls').style.display = $('#more').style.display = listy ? '' : 'none';
+  $('#chips').innerHTML = '';
+  $('#controls').style.display = listy ? '' : 'none';
   document.querySelectorAll('.bk').forEach(el => el.style.display = ['critics', 'outlets', 'authors'].includes(view) ? 'none' : '');
   if (!listy) $('#count').textContent = '';
-  if (['books', 'critics', 'outlets', 'authors'].includes(view)) head('');
+  if (['home', 'books', 'critics', 'outlets', 'authors'].includes(view)) head('');
   document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.v === view));
-  V[view](arg);
 }
 let lastPath = '';
 addEventListener('hashchange', () => {

@@ -12,17 +12,18 @@ The main review set covers about 62,000 books, 192,000 reviews, 30,000 critics a
 
 ## Explorer
 
-`site/` is a static site published to GitHub Pages. It has four browsing views and a personal shelf:
+`site/` is a static site published to GitHub Pages. It opens on a home page, and has four browsing views and a personal shelf:
 
 | View | What it shows |
 |---|---|
+| Home | Site search across books, authors, critics and outlets; the books the latest refresh added; and the year's most acclaimed, most divisive and most reviewed books, each linking to the full ranked list |
 | Books | Every book with its date, overall verdict, review count, count of each rating, mean and adjusted mean. Filter by genre, publisher, year, author and minimum reviews; search by title, author, publisher or ISBN |
 | Critics | Each critic's review count, outlets, rating counts, mean and "vs. others" |
 | Authors | Each author's books, reviews, rating counts, mean and adjusted mean |
 | Outlets | The same figures as critics, by publication |
-| Shelf | Your rated and saved books, recommendations, and critics to follow (see below) |
+| Shelf | Your rated and saved books, recommendations, and critics to follow (see below). Until five books are rated it lists the most reviewed books to rate in place |
 
-Every column sorts. Lists load 150 rows at a time as you scroll. Filters, search, sort and the current page live in the URL, so any view can be bookmarked or shared.
+Every column sorts. Lists show 50 rows a page, or 100 or 250. Filters, search, sort, page size and the current page live in the URL, so any view can be bookmarked or shared and the back button returns to the same page. Two sorts have no column: `s=added` orders books by when they were last reviewed, and `s=spread` by the standard deviation of their ratings (the home page's "most divisive").
 
 Each book has a page with its publication details, rating counts, description, cover (click to enlarge) and every review with its rating, date, critic, outlet, pull quote and a link to the full review where one exists. Critic and outlet pages list every review with the book, the rating, the mean of the other reviews of that book, and the difference.
 
@@ -60,7 +61,7 @@ python3 site/build.py
 python3 -m http.server -d site
 ```
 
-`site/build.py` turns the CSVs into `site/data/books.json`, `site/data/index.json` (one compact row per review) and 128 shards of per-book detail under `site/data/reviews/`, which pages fetch on demand. `.github/workflows/pages.yml` runs it and publishes the site on every push to `main` that touches `data/` or `site/`, and after each data refresh. On deploy the build appends a content hash to the script and stylesheet links, so a browser never pairs a new page with a cached old script.
+`site/build.py` turns the CSVs into `site/data/books.json`, `site/data/index.json` (one compact row per review) 128 shards of per-book detail under `site/data/reviews/`, which pages fetch on demand, and `site/data/home.json`, a few kilobytes the home page draws from while the full data loads. `.github/workflows/pages.yml` runs it and publishes the site on every push to `main` that touches `data/` or `site/`, and after each data refresh. On deploy the build appends a content hash to the script and stylesheet links, so a browser never pairs a new page with a cached old script.
 
 ## Shelf and recommendations
 

@@ -54,7 +54,21 @@
     if (meta) meta.insertAdjacentHTML('beforeend', ` · <span id="mine">${mine(slug)}</span>`);
     return done;
   };
+  // ---- getting started: the most reviewed books, to rate in place until the shelf has five ratings ----
+  const START = 5, START_LIST = 20;
+  function starter() {
+    const rated = Object.entries(shelf).filter(([s, x]) => bySlug[s] && x.v).length;
+    if (rated >= START) return '';
+    const list = B.filter(b => !shelf[b.slug] && b.n).sort((p, q) => q.n - p.n).slice(0, START_LIST);
+    const pick = b => `<select data-rate="${esc(b.slug)}" aria-label="Your rating of ${esc(b.title)}"><option value="">rate it</option>`
+      + CHOICES.filter(([v]) => v).map(([v, l]) => `<option value="${v}">${l}</option>`).join('') + '</select>';
+    return `<h2 class="sec first">Rate books you’ve read</h2>`
+      + `<div class="meta">${rated ? `${START - rated} more to go. ` : ''}Rate five to find critics whose verdicts match yours. These are the most reviewed books; open any other book to rate it there.</div>`
+      + `<div class="starter">${list.map(b => `<div><span>${bookLink(b)}<span class="d"> ${esc(baseAuthor(b.author))}</span></span>${pick(b)}</div>`).join('')}</div>`;
+  }
   $('#head').addEventListener('change', e => {
+    const slug = e.target.dataset?.rate;
+    if (slug && e.target.value) { shelf[slug] = { v: +e.target.value, t: Date.now() }; save(); route(); return; }
     if (e.target.id !== 'rate') return;
     const v = e.target.value;
     if (v === '') delete shelf[S.arg];
@@ -253,7 +267,7 @@
 
   V.shelf = () => {
     const rows = Object.entries(shelf).filter(([s]) => bySlug[s]).map(([s, x]) => ({ ...bySlug[s], mine: x.v, t: x.t }));
-    head(`<div class="meta">${int(rows.length)} ${rows.length === 1 ? 'book' : 'books'}</div>`);
+    head(`<div class="meta">${int(rows.length)} ${rows.length === 1 ? 'book' : 'books'}</div>${starter()}`);
     table([
       { k: 'title', label: 'Title', f: titleCell },
       authorCol,

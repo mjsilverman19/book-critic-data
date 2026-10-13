@@ -185,7 +185,7 @@ def main():
     for b in books:
         if b.get("bf"):
             out_books.append([b["slug"], b["title"], b["author"], pub_name.get(publisher_key(b["publisher"]), ""), b["date_published"], [],
-                              [0, 0, 0, 0], None, None, b["isbn"], "", 1])
+                              [0, 0, 0, 0], None, None, b["isbn"], "", 1, ""])
             detail[shard(b["slug"])][b["slug"]]["d"] = b["description"].strip()
             detail[shard(b["slug"])][b["slug"]]["cover"] = b["cover_url"].strip()
             continue
@@ -200,7 +200,7 @@ def main():
         out_books.append([
             b["slug"], b["title"], b["author"], pub_name.get(publisher_key(b["publisher"]), ""), d, genres,
             [int(b["n_rave"] or 0), int(b["n_positive"] or 0), int(b["n_mixed"] or 0), int(b["n_pan"] or 0)],
-            m, adj, b["isbn"], b["overall_label"], 0,
+            m, adj, b["isbn"], b["overall_label"], 0, (b.get("lastmod") or "")[:10],
         ])
         detail[shard(b["slug"])][b["slug"]]["d"] = b["description"].strip()
         detail[shard(b["slug"])][b["slug"]]["cover"] = b["cover_url"].strip()
@@ -226,10 +226,63 @@ def main():
         for v in d.values():
             v["r"].sort()
         dump(OUT / "reviews" / f"{i}.json", d)
+    dump(OUT / "home.json", home(books, out_books, index, critics, outlets, detail))
     if os.environ.get("GITHUB_ACTIONS"):
         stamp_assets()
     print(f"{len(bf_books)} backfill books")
     print(f"{len(out_books)} books, {len(index)} reviews, {len(critics)} critics, {len(outlets)} outlets")
+
+
+def spread(dist):
+    """Standard deviation of a book's ratings on the 1-4 scale, from its [rave, positive, mixed, pan] counts."""
+    n = sum(dist)
+    if n < 2:
+        return 0.0
+    mean = sum(v * c for v, c in zip((4, 3, 2, 1), dist)) / n
+    return (sum(c * (v - mean) ** 2 for v, c in zip((4, 3, 2, 1), dist)) / n) ** 0.5
+
+
+def home(books, out_books, index, critics, outlets, detail, per_list=5, recent_n=8, min_reviews=8):
+    """The landing page's data, small enough to render before books.json and index.json arrive.
+
+    Counts are taken from the review index so they match what the explorer computes from all sources.
+    """
+    import datetime
+    n = [0] * len(out_books)
+    dist = [[0, 0, 0, 0] for _ in out_books]
+    for b, v, *_ in index:
+        n[b] += 1
+        if v:
+            dist[b][4 - v] += 1
+    def card(i, cover=False):
+        row = out_books[i]
+        c = sum(dist[i])
+        mean = sum(v * k for v, k in zip((4, 3, 2, 1), dist[i])) / c if c else None
+        out = {"slug": row[0], "title": row[1], "author": row[2], "n": n[i], "dist": dist[i], "overall": row[10],
+               "adj": round((c * mean + PRIOR_N * PRIOR_MEAN) / (c + PRIOR_N), 2) if c else None}
+        if cover:
+            out["cover"] = detail[shard(row[0])][row[0]].get("cover", "")
+        return out
+
+    recent = sorted((i for i, r in enumerate(out_books) if r[12] and n[i]), key=lambda i: (out_books[i][12], n[i]), reverse=True)[:recent_n]
+    def year_pool(y):
+        return [i for i, r in enumerate(out_books) if (r[4] or "")[:4] == str(y) and sum(dist[i]) >= min_reviews]
+    year = datetime.date.today().year
+    pool = year_pool(year)
+    if len(pool) < per_list:  # early in January, use the year just ended
+        year -= 1
+        pool = year_pool(year)
+    adj = lambda i: (sum(v * k for v, k in zip((4, 3, 2, 1), dist[i])) + PRIOR_N * PRIOR_MEAN) / (sum(dist[i]) + PRIOR_N)
+    return {
+        "totals": {"books": sum(1 for x in n if x), "reviews": len(index), "critics": len(critics), "outlets": len(outlets)},
+        "updated": out_books[recent[0]][12] if recent else "",
+        "year": year,
+        "min": min_reviews,
+        "recent": [card(i, cover=True) for i in recent],
+        "acclaimed": [card(i) for i in sorted(pool, key=lambda i: (-adj(i), -n[i]))[:per_list]],
+        "divisive": [card(i) for i in sorted(pool, key=lambda i: (-spread(dist[i]), -n[i]))[:per_list]],
+        "reviewed": [card(i) for i in sorted(pool, key=lambda i: -n[i])[:per_list]],
+    }
 
 
 def stamp_assets():
