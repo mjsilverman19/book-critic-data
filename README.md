@@ -61,7 +61,7 @@ python3 site/build.py
 python3 -m http.server -d site
 ```
 
-`site/build.py` turns the CSVs into `site/data/books.json`, `site/data/index.json` (one compact row per review) 128 shards of per-book detail under `site/data/reviews/`, which pages fetch on demand, and `site/data/home.json`, a few kilobytes the home page draws from while the full data loads. `.github/workflows/pages.yml` runs it and publishes the site on every push to `main` that touches `data/` or `site/`, and after each data refresh. On deploy the build appends a content hash to the script and stylesheet links, so a browser never pairs a new page with a cached old script.
+`site/build.py` turns the CSVs into `site/data/books.json`, `site/data/index.json` (one compact row per review), 128 shards of per-book detail under `site/data/reviews/`, which pages fetch on demand, and `site/data/home.json`, a few kilobytes the home page draws from while the full data loads. `.github/workflows/pages.yml` runs it and publishes the site on every push to `main` that touches `data/` or `site/`, and after each data refresh. On deploy the build appends a content hash to the script and stylesheet links, so a browser never pairs a new page with a cached old script.
 
 ## Shelf and recommendations
 
