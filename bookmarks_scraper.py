@@ -103,10 +103,8 @@ def discover(fetch):
 # ---------------------------------------------------------------- parsing
 def parse_reviews(soup):
     reviews = []
-    for rv in soup.select('[itemprop="review"]'):
-        head = rv.select_one(".bookmarks_pullquote_reviewer")
-        if head is None:
-            continue
+    for head in soup.select(".bookmarks_pullquote_reviewer"):
+        rv = head.find_parent(attrs={"itemprop": "review"}) or head.parent
         lab_el = head.select_one(".review_rating")
         label = clean(lab_el.get_text()).lower() if lab_el else None
         val = rv.select_one('[itemprop="reviewRating"] [itemprop="ratingValue"]')
@@ -120,6 +118,11 @@ def parse_reviews(soup):
             critic = clean(nm.get_text()).rstrip(",").strip() if nm else None
             a = auth.select_one("a[href]")
             if a:
+                critic_slug = slug_of(a["href"])
+        else:
+            a = head.select_one("a.reviewer_permalink")
+            if a:
+                critic = clean(a.get_text()).rstrip(",").strip()
                 critic_slug = slug_of(a["href"])
 
         outlet = review_url = None
@@ -143,7 +146,7 @@ def parse_reviews(soup):
             more = rv.select_one("a.see_more_link")
             review_url = more.get("href") if more else None
 
-        body = rv.select_one('[itemprop="reviewBody"]')
+        body = rv.select_one('[itemprop="reviewBody"]') or rv.select_one(".bookmarks_a_review_pullquote")
         if not (critic or outlet or (body and clean(body.get_text()))):
             continue  # empty placeholder block in the site's markup
         reviews.append(dict(
@@ -156,6 +159,43 @@ def parse_reviews(soup):
 
 def parse_book(html):
     soup = BeautifulSoup(html, "lxml")
+    # Book Marks moved from microdata to a JSON-LD graph in October 2026.
+    graph = []
+    for script in soup.select('script[type="application/ld+json"]'):
+        try:
+            data = json.loads(script.string or script.get_text())
+        except (ValueError, TypeError):
+            continue
+        for node in data if isinstance(data, list) else [data]:
+            if isinstance(node, dict):
+                graph.extend(node.get("@graph", [node]))
+    linked = {n.get("@id"): n for n in graph if isinstance(n, dict) and n.get("@id")}
+    def resolve(value):
+        return linked.get(value.get("@id"), value) if isinstance(value, dict) else value
+    for node in graph:
+        if not isinstance(node, dict) or "Book" not in ([node.get("@type")] if isinstance(node.get("@type"), str) else node.get("@type", [])):
+            continue
+        def names(value):
+            values = value if isinstance(value, list) else [value]
+            return "; ".join(dict.fromkeys(clean(resolve(v).get("name", "") if isinstance(resolve(v), dict) else v) for v in values if v)) or None
+        image = resolve(node.get("image"))
+        if isinstance(image, list):
+            image = resolve(image[0]) if image else None
+        rating = node.get("aggregateRating") or {}
+        overall = soup.select_one(".book_review_stats .stat_total")
+        all_link = soup.select_one("a.bookmarks_detail_see_all_reviews")
+        genres = node.get("genre") or []
+        return dict(
+            title=clean(node.get("name")), author=names(node.get("author")),
+            publisher=names(node.get("publisher")), date_published=node.get("datePublished"),
+            isbn=node.get("isbn"), genres=json.dumps(genres if isinstance(genres, list) else [genres]),
+            description=clean(node.get("description")),
+            cover_url=(image.get("contentUrl") or image.get("url")) if isinstance(image, dict) else image,
+            overall_label=clean(overall.get_text()).lower() if overall else None,
+            overall_value=int(rating["ratingValue"]) if rating.get("ratingValue") is not None else None,
+            review_count_stated=int(rating.get("reviewCount") or rating.get("ratingCount") or 0),
+            all_reviews_path=all_link.get("href") if all_link else None,
+        ), parse_reviews(soup)
     book = soup.select_one('[itemtype="http://schema.org/Book"]') or soup
     g = lambda sel: book.select_one(sel)
 
@@ -230,6 +270,8 @@ def crawl(args):
         if r.status_code == 404:
             return None, None
         meta, reviews = parse_book(r.text)
+        if not meta["title"]:
+            raise RuntimeError(f"Book title missing at {r.url}; source markup may have changed")
         stated = meta["review_count_stated"] or 0
         if stated > len(reviews) or (meta["all_reviews_path"] and not reviews):
             path = meta["all_reviews_path"] or f"/reviews/all/{slug}/"
@@ -242,6 +284,8 @@ def crawl(args):
                 full = parse_reviews(BeautifulSoup(r2.text, "lxml"))
                 if len(full) >= len(reviews):
                     reviews = full
+        if stated and not reviews:
+            raise RuntimeError(f"No reviews parsed for {slug}, but source states {stated}")
         meta.pop("all_reviews_path")
         return meta, reviews
 

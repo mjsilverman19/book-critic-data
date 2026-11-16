@@ -67,6 +67,11 @@ def main():
                              ua=UA, refresh_sitemap=True))
 
     db = sqlite3.connect(db_path)
+    failures = db.execute("SELECT COUNT(*) FROM books WHERE status='error'").fetchone()[0]
+    if failures:
+        db.close()
+        shutil.rmtree(tmp)
+        raise RuntimeError(f"{failures} books failed to refresh; leaving committed data unchanged")
     # books we already had but could not refresh: restore old status and lastmod so they are retried next run
     stuck = db.execute("SELECT slug FROM books WHERE status IN ('pending','error')").fetchall()
     restored = 0
